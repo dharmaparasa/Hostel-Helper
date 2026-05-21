@@ -34,6 +34,11 @@ export async function loadSession() {
   return data.session;
 }
 
+function getRedirectTarget() {
+  const base = import.meta.env.BASE_URL || "/";
+  return window.location.origin + base;
+}
+
 export async function sendEmailLogin(email) {
   const client = getSupabaseClient();
   if (!client) {
@@ -43,7 +48,7 @@ export async function sendEmailLogin(email) {
   const { error } = await client.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: window.location.origin
+      emailRedirectTo: getRedirectTarget()
     }
   });
 
@@ -60,8 +65,7 @@ export async function signUpUser(email, password) {
     return { demo: true };
   }
 
-  const redirectTo =
-    window.location.origin + (import.meta.env.PROD ? "/Hostel-Helper/" : "/");
+  const redirectTo = getRedirectTarget();
 
   const { error } = await client.auth.signUp(
     {
@@ -88,8 +92,7 @@ export async function signInWithGoogle() {
     return { demo: true };
   }
 
-  const redirectTo =
-    window.location.origin + (import.meta.env.PROD ? "/Hostel-Helper/" : "/");
+  const redirectTo = getRedirectTarget();
 
   const { error } = await client.auth.signInWithOAuth({
     provider: "google",
