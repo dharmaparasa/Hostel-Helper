@@ -48,7 +48,7 @@ export function LoginScreen() {
         <div className="screen-pad pt-6">
           <Header
             title="Please Sign In"
-            subtitle="Use your email to access your hostel app"
+            subtitle="Use your email to access your app"
           />
           <div className="panel p-4">
             <FormField
