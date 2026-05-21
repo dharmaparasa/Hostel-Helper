@@ -7,15 +7,19 @@ import { useToast } from "../context/ToastContext";
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { sendLoginEmail, startDemoSession, hostels } = useAppContext();
+  const { sendLoginEmail, signInWithGoogleProvider, startDemoSession, hostels } = useAppContext();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const demoAvailable =
     !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
   const nextPath = hostels.length === 0 ? "/hostels" : "/tenants";
+  const googleButtonDisabled = demoAvailable || oauthLoading;
 
   const handleLogin = async () => {
+    setErrorMessage("");
     setLoading(true);
     try {
       const result = await sendLoginEmail(email);
@@ -34,7 +38,12 @@ export function LoginScreen() {
         });
       }
     } catch (error) {
-      showToast("Could not send login link");
+      console.error("Login error", error);
+      const message = error?.message || "Could not send login link.";
+      setErrorMessage(
+        message + " If this fails, try signing in with Google instead."
+      );
+      showToast(message);
     } finally {
       setLoading(false);
     }
@@ -44,6 +53,20 @@ export function LoginScreen() {
     startDemoSession("demo@hostelpay.com");
     showToast("Demo opened");
     navigate(nextPath, { replace: true });
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMessage("");
+    setOauthLoading(true);
+    try {
+      await signInWithGoogleProvider();
+    } catch (error) {
+      console.error("Google sign in error", error);
+      const message = error?.message || "Google sign in failed.";
+      setErrorMessage(message);
+      showToast(message);
+      setOauthLoading(false);
+    }
   };
 
   return (
@@ -79,6 +102,14 @@ export function LoginScreen() {
             >
               {loading ? "Please wait..." : "Send Login Link"}
             </button>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={googleButtonDisabled}
+              className="secondary-button mt-3 w-full"
+            >
+              {oauthLoading ? "Redirecting to Google..." : "Continue with Google"}
+            </button>
             {demoAvailable ? (
               <button type="button" onClick={openDemo} className="secondary-button mt-3 w-full">
                 Open Demo
@@ -87,6 +118,11 @@ export function LoginScreen() {
             <button type="button" onClick={() => navigate('/signup')} className="tertiary-button mt-3 w-full">
               Create account
             </button>
+            {errorMessage ? (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {errorMessage}
+              </p>
+            ) : null}
             <p className="mt-4 text-sm text-muted">
               Existing owners go back to the tenant list after login.
             </p>

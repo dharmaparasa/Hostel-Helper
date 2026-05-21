@@ -82,6 +82,29 @@ export async function signUpUser(email, password) {
   return { sent: true };
 }
 
+export async function signInWithGoogle() {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { demo: true };
+  }
+
+  const redirectTo =
+    window.location.origin + (import.meta.env.PROD ? "/Hostel-Helper/" : "/");
+
+  const { error } = await client.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo
+    }
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return { started: true };
+}
+
 export async function signOut() {
   const client = getSupabaseClient();
   if (!client) {

@@ -36,7 +36,8 @@ export function SignupScreen() {
         });
       }
     } catch (err) {
-      showToast("Could not create account");
+      console.error("Signup error", err);
+      showToast(err?.message || "Could not create account");
     } finally {
       setLoading(false);
     }
