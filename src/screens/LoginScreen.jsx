@@ -47,7 +47,7 @@ export function LoginScreen() {
         </div>
         <div className="screen-pad pt-6">
           <Header
-            title="Sign In"
+            title="Please Sign In"
             subtitle="Use your email to access your hostel app"
           />
           <div className="panel p-4">
