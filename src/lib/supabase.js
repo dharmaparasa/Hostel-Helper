@@ -54,6 +54,34 @@ export async function sendEmailLogin(email) {
   return { sent: true };
 }
 
+export async function signUpUser(email, password) {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { demo: true };
+  }
+
+  const redirectTo =
+    window.location.origin + (import.meta.env.PROD ? "/Hostel-Helper/" : "/");
+
+  const { error } = await client.auth.signUp(
+    {
+      email,
+      password
+    },
+    {
+      options: {
+        emailRedirectTo: redirectTo
+      }
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return { sent: true };
+}
+
 export async function signOut() {
   const client = getSupabaseClient();
   if (!client) {

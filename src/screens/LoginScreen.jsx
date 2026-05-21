@@ -22,10 +22,17 @@ export function LoginScreen() {
       if (result?.demo) {
         startDemoSession(email);
         showToast("Demo opened");
+        navigate(nextPath, { replace: true });
       } else {
-        showToast("Check your email for a login link");
+        navigate("/check-email", {
+          replace: true,
+          state: {
+            title: "Check your inbox",
+            message: "We sent a login link to your email. Open it to continue.",
+            email
+          }
+        });
       }
-      navigate(nextPath, { replace: true });
     } catch (error) {
       showToast("Could not send login link");
     } finally {
@@ -77,6 +84,9 @@ export function LoginScreen() {
                 Open Demo
               </button>
             ) : null}
+            <button type="button" onClick={() => navigate('/signup')} className="tertiary-button mt-3 w-full">
+              Create account
+            </button>
             <p className="mt-4 text-sm text-muted">
               Existing owners go back to the tenant list after login.
             </p>

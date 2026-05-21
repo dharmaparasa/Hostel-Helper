@@ -3,6 +3,8 @@ import { AppProvider, useAppContext } from "./context/AppContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AppLayout } from "./layout/AppLayout";
 import { LoginScreen } from "./screens/LoginScreen";
+import { SignupScreen } from "./screens/SignupScreen";
+import { CheckEmailScreen } from "./screens/CheckEmailScreen";
 import { HostelSelectionScreen } from "./screens/HostelSelectionScreen";
 import { TenantListScreen } from "./screens/TenantListScreen";
 import { AddTenantScreen } from "./screens/AddTenantScreen";
@@ -26,9 +28,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
+        path="/signup"
+        element={session ? <Navigate to={homePath} replace /> : <SignupScreen />}
+      />
+      <Route
         path="/login"
         element={session ? <Navigate to={homePath} replace /> : <LoginScreen />}
       />
+      <Route path="/check-email" element={<CheckEmailScreen />} />
       <Route
         element={session ? <AppLayout /> : <Navigate to="/login" replace />}
       >

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { seedData } from "../data/seed";
-import { sendEmailLogin, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
+import { sendEmailLogin, signUpUser, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
 import {
   persistDemoSession,
   persistState,
@@ -163,6 +163,8 @@ export function AppProvider({ children }) {
 
   const sendLoginEmail = async (email) => sendEmailLogin(email);
 
+  const signUp = async (email, password) => signUpUser(email, password);
+
   const startDemoSession = (email) => {
     const nextSession = {
       user: {
@@ -196,6 +198,7 @@ export function AppProvider({ children }) {
       addTenant,
       addPayment,
       sendLoginEmail,
+      signUp,
       startDemoSession,
       logout
     }),
