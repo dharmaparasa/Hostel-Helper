@@ -21,6 +21,7 @@ export function SignupScreen() {
   const trimmedName = name.trim();
   const isNameValid = trimmedName.length >= 4 && !/^[0-9]/.test(trimmedName);
   const isEmailValid = email.includes("@") && email.trim().toLowerCase().endsWith(".com"); // require basic @ and .com
+  const passwordValidation = validatePassword(password);
   const isPasswordValidated = isPasswordValid(password);
   const isFormValid = isNameValid && isEmailValid && isPasswordValidated && !loading;
 
@@ -32,7 +33,7 @@ export function SignupScreen() {
       email,
       isEmailValid,
       password,
-      passwordValidation: validatePassword(password),
+      passwordValidation,
       isPasswordValidated,
       isFormValid,
       buttonDisabled: !isFormValid
@@ -113,16 +114,16 @@ export function SignupScreen() {
               />
               {password && (
                 <div className="mt-3 space-y-2 text-sm">
-                  <div className={`flex items-center gap-2 ${validatePassword(password).minLength ? "text-green-400" : "text-muted"}`}>
-                    <span>{validatePassword(password).minLength ? "✓" : "○"}</span>
+                  <div className={`flex items-center gap-2 ${passwordValidation.minLength ? "text-green-400" : "text-red-500"}`}>
+                    <span>{passwordValidation.minLength ? "✓" : "○"}</span>
                     <span>At least 8 characters</span>
                   </div>
-                  <div className={`flex items-center gap-2 ${validatePassword(password).hasLowerCase ? "text-green-400" : "text-muted"}`}>
-                    <span>{validatePassword(password).hasLowerCase ? "✓" : "○"}</span>
+                  <div className={`flex items-center gap-2 ${passwordValidation.hasLowerCase ? "text-green-400" : "text-red-500"}`}>
+                    <span>{passwordValidation.hasLowerCase ? "✓" : "○"}</span>
                     <span>Contains a letter (a-z)</span>
                   </div>
-                  <div className={`flex items-center gap-2 ${validatePassword(password).hasNumber ? "text-green-400" : "text-muted"}`}>
-                    <span>{validatePassword(password).hasNumber ? "✓" : "○"}</span>
+                  <div className={`flex items-center gap-2 ${passwordValidation.hasNumber ? "text-green-400" : "text-red-500"}`}>
+                    <span>{passwordValidation.hasNumber ? "✓" : "○"}</span>
                     <span>Contains a number (0-9)</span>
                   </div>
                 </div>
