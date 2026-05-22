@@ -86,6 +86,24 @@ export async function signUpUser(email, password) {
   return { sent: true };
 }
 
+export async function signInWithPassword(email, password) {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { demo: true };
+  }
+
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || {};
+}
+
 export async function signInWithGoogle() {
   const client = getSupabaseClient();
   if (!client) {

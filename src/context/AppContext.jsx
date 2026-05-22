@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { seedData } from "../data/seed";
-import { sendEmailLogin, signUpUser, signInWithGoogle, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
+import { sendEmailLogin, signUpUser, signInWithGoogle, signInWithPassword as supabaseSignInWithPassword, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
 import {
   persistDemoSession,
   persistState,
@@ -164,7 +164,13 @@ export function AppProvider({ children }) {
   const sendLoginEmail = async (email) => sendEmailLogin(email);
 
   const signUp = async (email, password) => signUpUser(email, password);
-  const signInWithGoogleProvider = async () => signInWithGoogle();
+  const signInWithGoogleProvider = async () => {
+    const result = await signInWithGoogle();
+    if (result?.demo) {
+      startDemoSession("demo@hostelpay.com");
+    }
+    return result;
+  };
 
   const startDemoSession = (email) => {
     const nextSession = {
@@ -176,6 +182,14 @@ export function AppProvider({ children }) {
 
     persistDemoSession(nextSession);
     setSession(nextSession);
+  };
+
+  const signInWithPassword = async (email, password) => {
+    const result = await supabaseSignInWithPassword(email, password);
+    if (result?.demo) {
+      startDemoSession(email || "demo@hostelpay.com");
+    }
+    return result;
   };
 
   const logout = async () => {
@@ -200,6 +214,7 @@ export function AppProvider({ children }) {
       addPayment,
       sendLoginEmail,
       signUp,
+      signInWithPassword,
       signInWithGoogleProvider,
       startDemoSession,
       logout
