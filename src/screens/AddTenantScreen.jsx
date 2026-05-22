@@ -5,6 +5,7 @@ import { FormField } from "../components/FormField";
 import { BackIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
+import { validateName, isNameValid } from "../lib/passwordValidator";
 
 function buildToday() {
   return new Date().toISOString().slice(0, 10);
@@ -32,6 +33,10 @@ export function AddTenantScreen() {
     [form.monthlyRent, form.additionalFees]
   );
 
+  // Name validation
+  const nameValidation = validateName(form.name);
+  const isTenantNameValid = isNameValid(form.name);
+
   const updateField = (field) => (event) =>
     setForm((current) => ({
       ...current,
@@ -39,7 +44,11 @@ export function AddTenantScreen() {
     }));
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.roomNumber.trim() || !form.monthlyRent) {
+    if (!form.name.trim() || !isTenantNameValid) {
+      showToast("Please enter a valid tenant name (alphanumeric, no special characters)");
+      return;
+    }
+    if (!form.roomNumber.trim() || !form.monthlyRent) {
       showToast("Please fill name, room, and rent");
       return;
     }
@@ -95,6 +104,19 @@ export function AddTenantScreen() {
         <div className="subtle-panel grid gap-4 p-4">
           <FormField label="Name">
             <input className="input-base" value={form.name} onChange={updateField("name")} placeholder="Tenant name" />
+            {form.name && !isTenantNameValid && (
+              <div className="mt-2 space-y-1 text-sm text-danger">
+                {!nameValidation.minLength && (
+                  <div>Name must be at least 4 characters</div>
+                )}
+                {!nameValidation.startsWithLetters && (
+                  <div>First 4 characters must be letters only</div>
+                )}
+                {!nameValidation.isAlphanumeric && (
+                  <div>After the first 4 letters, only use numbers, spaces, and hyphens (no special characters like @, #, $, !, etc.)</div>
+                )}
+              </div>
+            )}
           </FormField>
           <FormField label="Age">
             <input className="input-base" value={form.age} onChange={updateField("age")} placeholder="Age" inputMode="numeric" />

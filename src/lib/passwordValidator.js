@@ -8,6 +8,38 @@ export const PASSWORD_REQUIREMENTS = {
   hasNumber: /[0-9]/
 };
 
+/**
+ * Name validation rules - alphanumeric, spaces, and hyphens only
+ */
+export const NAME_REQUIREMENTS = {
+  minLength: 4,
+  minLetters: 4, // First 4 characters must be letters
+  alphanumericPattern: /^[a-zA-Z0-9\s\-]*$/, // Only letters, numbers, spaces, and hyphens
+  noSpecialChars: /[!@#$%^&*()_+=\[\]{};:'",.<>?/\\|`~]/,
+  startWithLetters: /^[a-zA-Z]{4,}/ // First 4+ characters must be letters
+};
+
+export function validateName(name) {
+  const trimmedName = name.trim();
+  const startsWithLetters = NAME_REQUIREMENTS.startWithLetters.test(trimmedName);
+  return {
+    isValid: isNameValid(trimmedName),
+    minLength: trimmedName.length >= NAME_REQUIREMENTS.minLength,
+    startsWithLetters: startsWithLetters,
+    isAlphanumeric: NAME_REQUIREMENTS.alphanumericPattern.test(trimmedName),
+    noSpecialChars: !NAME_REQUIREMENTS.noSpecialChars.test(trimmedName)
+  };
+}
+
+export function isNameValid(name) {
+  const trimmedName = name.trim();
+  return (
+    trimmedName.length >= NAME_REQUIREMENTS.minLength &&
+    NAME_REQUIREMENTS.startWithLetters.test(trimmedName) &&
+    NAME_REQUIREMENTS.alphanumericPattern.test(trimmedName)
+  );
+}
+
 export function validatePassword(password) {
   return {
     isValid: isPasswordValid(password),

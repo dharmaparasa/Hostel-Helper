@@ -4,7 +4,7 @@ import { Header } from "../components/Header";
 import { FormField } from "../components/FormField";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
-import { validatePassword, isPasswordValid } from "../lib/passwordValidator";
+import { validatePassword, isPasswordValid, validateName, isNameValid as validateNameCheck } from "../lib/passwordValidator";
 
 export function SignupScreen() {
   const navigate = useNavigate();
@@ -19,7 +19,8 @@ export function SignupScreen() {
 
   // Validation state
   const trimmedName = name.trim();
-  const isNameValid = trimmedName.length >= 4 && !/^[0-9]/.test(trimmedName);
+  const nameValidation = validateName(name);
+  const isNameValid = validateNameCheck(name);
   const isEmailValid = email.includes("@") && email.trim().toLowerCase().endsWith(".com"); // require basic @ and .com
   const passwordValidation = validatePassword(password);
   const isPasswordValidated = isPasswordValid(password);
@@ -86,7 +87,17 @@ export function SignupScreen() {
                 type="text"
               />
               {name && !isNameValid && (
-                <div className="mt-2 text-sm text-danger">Name must be at least 4 characters and cannot start with a number</div>
+                <div className="mt-2 space-y-1 text-sm text-danger">
+                  {!nameValidation.minLength && (
+                    <div>Name must be at least 4 characters</div>
+                  )}
+                  {!nameValidation.startsWithLetters && (
+                    <div>First 4 characters must be letters only</div>
+                  )}
+                  {!nameValidation.isAlphanumeric && (
+                    <div>After the first 4 letters, only use numbers, spaces, and hyphens (no special characters like @, #, $, !, etc.)</div>
+                  )}
+                </div>
               )}
             </FormField>
 
