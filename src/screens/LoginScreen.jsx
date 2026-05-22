@@ -103,7 +103,7 @@ export function LoginScreen() {
             <button
               type="button"
               onClick={handlePasswordSignIn}
-              disabled={loading || !email.includes("@") || password.length < 6}
+              disabled={loading || !email.includes("@") || password.length < 1}
               className="primary-button mt-6 w-full"
             >
               {loading ? "Signing In..." : "Sign In"}

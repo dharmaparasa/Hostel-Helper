@@ -4,6 +4,7 @@ import { Header } from "../components/Header";
 import { FormField } from "../components/FormField";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
+import { validatePassword, isPasswordValid } from "../lib/passwordValidator";
 
 export function SignupScreen() {
   const navigate = useNavigate();
@@ -15,6 +16,27 @@ export function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const demoAvailable = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
   const nextPath = hostels.length === 0 ? "/hostels" : "/tenants";
+
+  // Validation state
+  const isNameValid = name.trim().length >= 4; // require at least 4 characters for name
+  const isEmailValid = email.includes("@") && email.trim().toLowerCase().endsWith(".com"); // require basic @ and .com
+  const isPasswordValidated = isPasswordValid(password);
+  const isFormValid = isNameValid && isEmailValid && isPasswordValidated && !loading;
+
+  // Debug logs when user is interacting with the form
+  if (password || email || name) {
+    console.log("Form validation debug:", {
+      name: name.trim(),
+      isNameValid,
+      email,
+      isEmailValid,
+      password,
+      passwordValidation: validatePassword(password),
+      isPasswordValidated,
+      isFormValid,
+      buttonDisabled: !isFormValid
+    });
+  }
 
   const handleSignup = async () => {
     setLoading(true);
@@ -61,6 +83,9 @@ export function SignupScreen() {
                 placeholder="e.g. John's Hostel"
                 type="text"
               />
+              {name && !isNameValid && (
+                <div className="mt-2 text-sm text-danger">Name should be at least 4 characters</div>
+              )}
             </FormField>
 
             <FormField label="Email Address" hint="We'll send a confirmation email" className="mt-4">
@@ -72,9 +97,12 @@ export function SignupScreen() {
                 inputMode="email"
                 type="email"
               />
+              {email && !isEmailValid && (
+                <div className="mt-2 text-sm text-danger">Please provide a valid .com email address</div>
+              )}
             </FormField>
 
-            <FormField label="Password" hint="Choose a strong password">
+            <FormField label="Password" hint="Choose a strong password" className="mt-4">
               <input
                 className="input-base"
                 value={password}
@@ -82,13 +110,30 @@ export function SignupScreen() {
                 placeholder="••••••••"
                 type="password"
               />
+              {password && (
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className={`flex items-center gap-2 ${validatePassword(password).minLength ? "text-green-400" : "text-muted"}`}>
+                    <span>{validatePassword(password).minLength ? "✓" : "○"}</span>
+                    <span>At least 8 characters</span>
+                  </div>
+                  <div className={`flex items-center gap-2 ${validatePassword(password).hasLowerCase ? "text-green-400" : "text-muted"}`}>
+                    <span>{validatePassword(password).hasLowerCase ? "✓" : "○"}</span>
+                    <span>Contains a letter (a-z)</span>
+                  </div>
+                  <div className={`flex items-center gap-2 ${validatePassword(password).hasNumber ? "text-green-400" : "text-muted"}`}>
+                    <span>{validatePassword(password).hasNumber ? "✓" : "○"}</span>
+                    <span>Contains a number (0-9)</span>
+                  </div>
+                </div>
+              )}
             </FormField>
 
             <button
               type="button"
               onClick={handleSignup}
-              disabled={loading || !name.trim() || !email.includes("@") || password.length < 6}
+              disabled={!isFormValid}
               className="primary-button mt-6 w-full"
+              title={!isFormValid ? "Please fill in all required fields" : ""}
             >
               {loading ? "Please wait..." : "Create Account"}
             </button>
