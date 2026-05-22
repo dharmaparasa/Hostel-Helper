@@ -11,12 +11,12 @@
 
   html {
     font-family: "Noto Sans", "Segoe UI", sans-serif;
-    background: #eef2f1;
+    background: #ffffff;
     color: #15302b;
   }
 
   body {
-    @apply m-0 min-h-screen bg-[#eef2f1] text-ink antialiased;
+    @apply m-0 min-h-screen bg-white text-ink antialiased;
   }
 
   button,
@@ -28,16 +28,18 @@
 
 @layer components {
   .app-shell {
-    @apply min-h-screen bg-[#eef2f1];
+    @apply min-h-screen bg-[#FFFFFF];
   }
 
   .phone-frame {
-    @apply mx-auto min-h-screen w-full max-w-md bg-[#f5f7f7] px-0 pb-24 pt-0;
+    @apply mx-auto min-h-screen w-full max-w-md bg-[#E3F6F4] px-0 pb-24 pt-0;
   }
 
-  .panel {
-    @apply rounded-[18px] bg-card shadow-card;
-  }
+.panel {
+  /* Replaced bg-white/95 with your soft brand tint and updated the border to match perfectly */
+  @apply rounded-[18px] bg-[#C6ECE8]/90 shadow-card;
+  border: 1px solid rgba(12, 90, 81, 0.08);
+}
 
   .tap-card {
     @apply panel border border-transparent transition duration-150 hover:-translate-y-0.5 hover:border-brand/20;
