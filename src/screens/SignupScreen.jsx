@@ -95,7 +95,7 @@ export function SignupScreen() {
                     <div>First 4 characters must be letters only</div>
                   )}
                   {!nameValidation.isAlphanumeric && (
-                    <div>After the first 4 letters, only use numbers, spaces, and hyphens (no special characters like @, #, $, !, etc.)</div>
+                    <div>Special characters are not allowed</div>
                   )}
                 </div>
               )}

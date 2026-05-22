@@ -113,7 +113,7 @@ export function AddTenantScreen() {
                   <div>First 4 characters must be letters</div>
                 )}
                 {!nameValidation.isAlphanumeric && (
-                  <div>Special characters not allowed</div>
+                  <div>Special characters are not allowed</div>
                 )}
               </div>
             )}
