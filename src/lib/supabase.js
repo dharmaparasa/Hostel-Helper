@@ -36,7 +36,7 @@ export async function loadSession() {
 
 function getRedirectTarget() {
   const base = import.meta.env.BASE_URL || "/";
-  return window.location.origin + base;
+  return new URL(base, window.location.origin).toString();
 }
 
 export async function sendEmailLogin(email) {

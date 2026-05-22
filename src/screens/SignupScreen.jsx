@@ -18,7 +18,8 @@ export function SignupScreen() {
   const nextPath = hostels.length === 0 ? "/hostels" : "/tenants";
 
   // Validation state
-  const isNameValid = name.trim().length >= 4; // require at least 4 characters for name
+  const trimmedName = name.trim();
+  const isNameValid = trimmedName.length >= 4 && !/^[0-9]/.test(trimmedName);
   const isEmailValid = email.includes("@") && email.trim().toLowerCase().endsWith(".com"); // require basic @ and .com
   const isPasswordValidated = isPasswordValid(password);
   const isFormValid = isNameValid && isEmailValid && isPasswordValidated && !loading;
@@ -26,7 +27,7 @@ export function SignupScreen() {
   // Debug logs when user is interacting with the form
   if (password || email || name) {
     console.log("Form validation debug:", {
-      name: name.trim(),
+      name: trimmedName,
       isNameValid,
       email,
       isEmailValid,
@@ -84,7 +85,7 @@ export function SignupScreen() {
                 type="text"
               />
               {name && !isNameValid && (
-                <div className="mt-2 text-sm text-danger">Name should be at least 4 characters</div>
+                <div className="mt-2 text-sm text-danger">Name must be at least 4 characters and cannot start with a number</div>
               )}
             </FormField>
 
