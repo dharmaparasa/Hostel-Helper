@@ -9,6 +9,7 @@ export function SignupScreen() {
   const navigate = useNavigate();
   const { signUp, startDemoSession, hostels } = useAppContext();
   const { showToast } = useToast();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export function SignupScreen() {
   const handleSignup = async () => {
     setLoading(true);
     try {
-      const result = await signUp(email, password);
+      const result = await signUp(email, password, name);
       if (result?.demo) {
         // For demo mode, create a demo session and navigate in
         startDemoSession(email);
@@ -52,7 +53,17 @@ export function SignupScreen() {
         <div className="screen-pad pt-6">
           <Header title="Create Account" subtitle="Register with email and password" />
           <div className="panel p-4">
-            <FormField label="Email Address" hint="We'll send a confirmation email">
+            <FormField label="Full Name" hint="Your hostel business name or personal name">
+              <input
+                className="input-base"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. John's Hostel"
+                type="text"
+              />
+            </FormField>
+
+            <FormField label="Email Address" hint="We'll send a confirmation email" className="mt-4">
               <input
                 className="input-base"
                 value={email}
@@ -76,7 +87,7 @@ export function SignupScreen() {
             <button
               type="button"
               onClick={handleSignup}
-              disabled={loading || !email.includes("@") || password.length < 6}
+              disabled={loading || !name.trim() || !email.includes("@") || password.length < 6}
               className="primary-button mt-6 w-full"
             >
               {loading ? "Please wait..." : "Create Account"}

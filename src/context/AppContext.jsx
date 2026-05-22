@@ -163,7 +163,7 @@ export function AppProvider({ children }) {
 
   const sendLoginEmail = async (email) => sendEmailLogin(email);
 
-  const signUp = async (email, password) => signUpUser(email, password);
+  const signUp = async (email, password, name = "") => signUpUser(email, password, name);
   const signInWithGoogleProvider = async () => {
     const result = await signInWithGoogle();
     if (result?.demo) {

@@ -59,7 +59,7 @@ export async function sendEmailLogin(email) {
   return { sent: true };
 }
 
-export async function signUpUser(email, password) {
+export async function signUpUser(email, password, name = "") {
   const client = getSupabaseClient();
   if (!client) {
     return { demo: true };
@@ -70,7 +70,12 @@ export async function signUpUser(email, password) {
   const { error } = await client.auth.signUp(
     {
       email,
-      password
+      password,
+      options: {
+        data: {
+          name: name || ""
+        }
+      }
     },
     {
       options: {
