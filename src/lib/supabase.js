@@ -35,9 +35,9 @@ export async function loadSession() {
 }
 
 function getRedirectTarget() {
-  // const base = import.meta.env.BASE_URL || "/";
-  // return new URL(base, window.location.origin).toString();
-  return `${window.location.origin}/Hostel-Helper/`;
+  const base = import.meta.env.BASE_URL || "/";
+  return new URL(base, window.location.origin).toString();
+  // return `${window.location.origin}/Hostel-Helper/`;
 }
 
 export async function sendEmailLogin(email) {
@@ -68,22 +68,14 @@ export async function signUpUser(email, password, name = "") {
 
   const redirectTo = getRedirectTarget();
 
-  const { error } = await client.auth.signUp(
-    {
-      email,
-      password,
-      options: {
-        data: {
-          name: name || ""
-        }
-      }
-    },
-    {
-      options: {
-        emailRedirectTo: redirectTo
-      }
-    }
-  );
+  await client.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: redirectTo,
+    data: { name: name || "" }
+  }
+});
 
   if (error) {
     throw error;
