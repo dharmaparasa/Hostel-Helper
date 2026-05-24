@@ -35,8 +35,9 @@ export async function loadSession() {
 }
 
 function getRedirectTarget() {
-  const base = import.meta.env.BASE_URL || "/";
-  return new URL(base, window.location.origin).toString();
+  // const base = import.meta.env.BASE_URL || "/";
+  // return new URL(base, window.location.origin).toString();
+  return `${window.location.origin}/Hostel-Helper/`;
 }
 
 export async function sendEmailLogin(email) {
