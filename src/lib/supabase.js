@@ -68,20 +68,20 @@ export async function signUpUser(email, password, name = "") {
 
   const redirectTo = getRedirectTarget();
 
-  await client.auth.signUp({
-  email,
-  password,
-  options: {
-    emailRedirectTo: redirectTo,
-    data: { name: name || "" }
-  }
-});
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectTo,
+      data: { name: name || "" }
+    }
+  });
 
   if (error) {
     throw error;
   }
 
-  return { sent: true };
+  return { sent: true, data };
 }
 
 export async function signInWithPassword(email, password) {
