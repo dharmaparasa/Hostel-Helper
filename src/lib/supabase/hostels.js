@@ -38,9 +38,22 @@ export async function createHostel(name) {
     return null;
   }
 
+  const {
+    data: { user },
+    error: userError
+  } = await client.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user?.id) {
+    throw new Error("User not authenticated.");
+  }
+
   const { data, error } = await client
     .from(TABLE_NAME)
-    .insert({ name })
+    .insert({ name, owner_id: user.id })
     .select("id, name")
     .single();
 

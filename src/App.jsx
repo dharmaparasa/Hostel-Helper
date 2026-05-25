@@ -2,9 +2,11 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppProvider, useAppContext } from "./context/AppContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AppLayout } from "./layout/AppLayout";
+
 import { LoginScreen } from "./screens/LoginScreen";
 import { SignupScreen } from "./screens/SignupScreen";
 import { CheckEmailScreen } from "./screens/CheckEmailScreen";
+
 import { HostelSelectionScreen } from "./screens/HostelSelectionScreen";
 import { TenantListScreen } from "./screens/TenantListScreen";
 import { AddTenantScreen } from "./screens/AddTenantScreen";
@@ -12,7 +14,9 @@ import { TenantDetailScreen } from "./screens/TenantDetailScreen";
 
 function AppRoutes() {
   const { isReady, session, hostels } = useAppContext();
-  const homePath = hostels.length === 0 ? "/hostels" : "/tenants";
+
+  const hasHostels = hostels.length > 0;
+  const homePath = hasHostels ? "/tenants" : "/hostels";
 
   if (!isReady) {
     return (
@@ -27,24 +31,72 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route
-        path="/signup"
-        element={session ? <Navigate to={homePath} replace /> : <SignupScreen />}
-      />
+      {/* Public Routes */}
       <Route
         path="/login"
-        element={session ? <Navigate to={homePath} replace /> : <LoginScreen />}
+        element={
+          session ? <Navigate to={homePath} replace /> : <LoginScreen />
+        }
       />
-      <Route path="/check-email" element={<CheckEmailScreen />} />
+
       <Route
-        element={session ? <AppLayout /> : <Navigate to="/login" replace />}
+        path="/signup"
+        element={
+          session ? <Navigate to={homePath} replace /> : <SignupScreen />
+        }
+      />
+
+      <Route path="/check-email" element={<CheckEmailScreen />} />
+
+      {/* Protected Routes */}
+      <Route
+        element={
+          session ? <AppLayout /> : <Navigate to="/login" replace />
+        }
       >
+        {/* Root Redirect */}
         <Route path="/" element={<Navigate to={homePath} replace />} />
+
+        {/* Hostel Setup */}
         <Route path="/hostels" element={<HostelSelectionScreen />} />
-        <Route path="/tenants" element={<TenantListScreen />} />
-        <Route path="/tenants/new" element={<AddTenantScreen />} />
-        <Route path="/tenants/:tenantId" element={<TenantDetailScreen />} />
+
+        {/* Tenant Routes */}
+        <Route
+          path="/tenants"
+          element={
+            hasHostels ? (
+              <TenantListScreen />
+            ) : (
+              <Navigate to="/hostels" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/tenants/new"
+          element={
+            hasHostels ? (
+              <AddTenantScreen />
+            ) : (
+              <Navigate to="/hostels" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/tenants/:tenantId"
+          element={
+            hasHostels ? (
+              <TenantDetailScreen />
+            ) : (
+              <Navigate to="/hostels" replace />
+            )
+          }
+        />
       </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
