@@ -62,6 +62,18 @@ export function BuildingIcon({ className = "h-8 w-8" }) {
   );
 }
 
+export function TrashIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" strokeLinecap="round" />
+      <path d="M8 6V4h8v2" strokeLinecap="round" />
+      <path d="M6 6v14h12V6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 10v6" strokeLinecap="round" />
+      <path d="M14 10v6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ShieldIcon({ className = "h-4 w-4" }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">

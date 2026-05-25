@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { HostelCard } from "../components/HostelCard";
@@ -6,6 +6,7 @@ import { FormField } from "../components/FormField";
 import { BuildingIcon, PlusIcon, ShieldIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
+import { getTenantCountForHostel } from "../lib/supabase/hostels";
 
 export function HostelSelectionScreen() {
   const navigate = useNavigate();
@@ -21,14 +22,22 @@ export function HostelSelectionScreen() {
   const [editingHostelId, setEditingHostelId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [hostelTenantCounts, setHostelTenantCounts] = useState({});
+  const [loadingCounts, setLoadingCounts] = useState(false);
   const previewEmpty =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("preview") === "empty";
   const visibleHostels = previewEmpty ? [] : hostels;
-  const canContinue = visibleHostels.length > 0;
-  const guideSlots = Math.max(0, 2 - visibleHostels.length);
+  const isEmpty = visibleHostels.length === 0;
+  const canContinue = !isEmpty;
+  const modalTitle = editingHostelId ? "Rename Hostel" : "Add Hostel";
+  const modalSubtitle = editingHostelId
+    ? "Update the hostel name."
+    : "Add a new hostel to begin tracking rooms and tenants.";
 
-  const handleAddHostel = async () => {
+  const handleAddHostel = async (event) => {
+    event?.preventDefault();
+
     if (!newHostel.trim()) {
       setShowForm(true);
       return;
@@ -84,6 +93,39 @@ export function HostelSelectionScreen() {
     }
   };
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTenantCounts() {
+      if (visibleHostels.length === 0) {
+        setHostelTenantCounts({});
+        return;
+      }
+      setLoadingCounts(true);
+      const nextCounts = {};
+
+      for (const hostel of visibleHostels) {
+        try {
+          nextCounts[hostel.id] = await getTenantCountForHostel(hostel.id);
+        } catch (error) {
+          console.error("Failed to fetch tenant count for hostel:", error);
+          nextCounts[hostel.id] = undefined;
+        }
+      }
+
+      if (mounted) {
+        setHostelTenantCounts(nextCounts);
+        setLoadingCounts(false);
+      }
+    }
+
+    loadTenantCounts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [visibleHostels]);
+
   return (
     <>
       <div className="top-app-bar">
@@ -92,229 +134,142 @@ export function HostelSelectionScreen() {
           Setup
         </span>
       </div>
-      <div className="screen-pad">
+      <div className="screen-pad pb-28">
         <Header
-          title={visibleHostels.length === 0 ? "Add Your Hostels" : "Your Hostels"}
+          title={isEmpty ? "Add Your Hostels" : "Your Hostels"}
           subtitle={
-            visibleHostels.length === 0
-              ? "Add the hostels you manage"
-              : "Manage the hostels and add tenants to them"
+            isEmpty
+              ? "Create and manage the hostels you oversee"
+              : "Manage your hostels and add tenants to them"
           }
         />
-        {visibleHostels.length === 0 ? (
-          <div className="space-y-3 pb-10">
+
+        {isEmpty ? (
+          <div className="space-y-6 pb-10">
             <div className="grid grid-cols-2 gap-3">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="panel flex min-h-28 flex-col items-center justify-center gap-2 px-4 py-5 text-center text-[#c9cfce] shadow-soft"
-                >
-                  <BuildingIcon className="h-8 w-8" />
-                  <p className="text-base font-semibold leading-snug">
-                    Your Hostels
-                    <br />
-                    will appear here
-                  </p>
-                </div>
-              ))}
+              <HostelCard hostel={{ name: "Example hostel" }} isGhost />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="panel flex w-full flex-col items-center justify-center gap-3 px-6 py-7 text-center shadow-soft"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand">
-                <PlusIcon className="h-7 w-7" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-ink">Add Your First Hostel</p>
-                <p className="mt-2 text-base text-muted">
-                  Tap here to add the first hostel.
-                </p>
-              </div>
-            </button>
-            {showForm ? (
-              <div className="panel p-4">
-                <FormField label={editingHostelId ? "Rename Hostel" : "Hostel Name"}>
-                  <input
-                    className="input-base"
-                    value={newHostel}
-                    onChange={(event) => setNewHostel(event.target.value)}
-                    placeholder="Enter hostel name"
-                  />
-                </FormField>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAddHostel}
-                    disabled={submitting || !newHostel.trim()}
-                    className="primary-button flex-1"
-                  >
-                    {submitting ? "Saving..." : editingHostelId ? "Save Name" : "Save Hostel"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingHostelId(null);
-                      setNewHostel("");
-                      setErrorMessage("");
-                    }}
-                    className="secondary-button flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                {errorMessage ? (
-                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                    {errorMessage}
-                  </p>
-                ) : null}
-                {editingHostelId ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const hostel = hostels.find((item) => item.id === editingHostelId);
-                      if (hostel) {
-                        handleRemoveHostel(hostel);
-                      }
-                    }}
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#fff1f2] px-4 text-sm font-semibold text-[#be123c]"
-                  >
-                    Remove Hostel
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-            {!showForm ? (
-              <div className="pt-8">
-                <button
-                  type="button"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#dfe5e4] px-6 text-base font-semibold text-[#8d9996]"
-                  disabled
-                >
-                  Continue
-                </button>
-                <div className="mt-3 flex items-center justify-center gap-2 text-sm font-medium text-[#8d9996]">
-                  <ShieldIcon className="h-4 w-4" />
-                  Your data is safe and secure
-                </div>
-              </div>
-            ) : null}
           </div>
         ) : (
-          <div className="space-y-3 pb-10">
+          <div className="space-y-6 pb-10">
             <div className="grid grid-cols-2 gap-3">
-              {visibleHostels.map((hostel) => (
-                <HostelCard
-                  key={hostel.id}
-                  hostel={hostel}
-                  onClick={() => openRenameForm(hostel)}
-                  onEdit={() => openRenameForm(hostel)}
-                  onDelete={() => handleRemoveHostel(hostel)}
-                />
-              ))}
-              <HostelCard
-                key="add-hostel-card"
-                hostel={{ name: "Add hostel" }}
-                isAddCard
-                onClick={() => setShowForm(true)}
-              />
-              {Array.from({ length: Math.max(0, 1 - visibleHostels.length) }).map((_, index) => (
-                <div
-                  key={`guide-slot-${index}`}
-                  className="panel flex min-h-28 flex-col items-center justify-center gap-2 px-4 py-5 text-center text-[#c9cfce] shadow-soft"
-                >
-                  <BuildingIcon className="h-8 w-8" />
-                  <p className="text-base font-semibold leading-snug">
-                    Your Hostels
-                    <br />
-                    will appear here
-                  </p>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowForm((current) => !current)}
-              className="panel flex w-full flex-col items-center justify-center gap-3 border border-dashed border-brand/35 px-6 py-7 text-center shadow-soft"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand">
-                <PlusIcon className="h-7 w-7" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-ink">Add Hostel</p>
-                <p className="mt-2 text-base text-muted">
-                  New hostels will appear in the cards above.
-                </p>
-              </div>
-            </button>
-            {showForm ? (
-              <div className="panel p-4">
-                <FormField label={editingHostelId ? "Rename Hostel" : "Hostel Name"}>
-                  <input
-                    className="input-base"
-                    value={newHostel}
-                    onChange={(event) => setNewHostel(event.target.value)}
-                    placeholder="Enter hostel name"
+              {visibleHostels.map((hostel) => {
+                const tenantCount = hostelTenantCounts[hostel.id];
+                const deleteDisabled = tenantCount === undefined || tenantCount > 0;
+                const helperText = tenantCount > 0
+                  ? "Hostel can only be deleted when no tenants are assigned."
+                  : tenantCount === undefined && loadingCounts
+                  ? "Checking tenant assignments..."
+                  : undefined;
+
+                return (
+                  <HostelCard
+                    key={hostel.id}
+                    hostel={hostel}
+                    onClick={() => openRenameForm(hostel)}
+                    onEdit={() => openRenameForm(hostel)}
+                    onDelete={() => handleRemoveHostel(hostel)}
+                    deleteDisabled={deleteDisabled}
+                    helperText={helperText}
                   />
-                </FormField>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAddHostel}
-                    disabled={submitting || !newHostel.trim()}
-                    className="primary-button flex-1"
-                  >
-                    {submitting ? "Saving..." : editingHostelId ? "Save Name" : "Save Hostel"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingHostelId(null);
-                      setNewHostel("");
-                      setErrorMessage("");
-                    }}
-                    className="secondary-button flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                {errorMessage ? (
-                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                    {errorMessage}
-                  </p>
-                ) : null}
-                {editingHostelId ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const hostel = hostels.find((item) => item.id === editingHostelId);
-                      if (hostel) {
-                        handleRemoveHostel(hostel);
-                      }
-                    }}
-                    className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#fff1f2] px-4 text-sm font-semibold text-[#be123c]"
-                  >
-                    Remove Hostel
-                  </button>
-                ) : null}
+                );
+              })}
               </div>
-            ) : null}
-            <div className="pt-8">
-              <button
-                type="button"
-                className={`w-full ${canContinue ? "primary-button" : "inline-flex h-12 items-center justify-center rounded-xl bg-[#dfe5e4] px-6 text-base font-semibold text-[#8d9996]"}`}
-                onClick={() => navigate("/tenants")}
-                disabled={!canContinue}
-              >
-                Continue
-              </button>
-            </div>
           </div>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setEditingHostelId(null);
+          setNewHostel("");
+          setErrorMessage("");
+          setShowForm(true);
+        }}
+        className="fixed right-6 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-[0_18px_45px_rgba(51,197,142,0.18)] transition duration-200 hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand/40"
+        style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))", right: "calc(1.5rem + env(safe-area-inset-right))" }}
+        aria-label="Add hostel"
+      >
+        <PlusIcon className="h-6 w-6" />
+      </button>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/60 bg-white/95 px-4 py-4 backdrop-blur-sm sm:px-6">
+        <button
+          type="button"
+          onClick={() => navigate("/tenants")}
+          disabled={!canContinue}
+          className={`w-full ${canContinue ? "primary-button" : "inline-flex h-12 items-center justify-center rounded-xl bg-[#dfe5e4] px-6 text-base font-semibold text-[#8d9996]"}`}
+        >
+          Continue
+        </button>
+      </div>
+
+      {showForm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 backdrop-blur-sm px-4 py-6 sm:items-center"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-3xl border border-white/15 bg-white/95 p-6 shadow-[0_24px_48px_rgba(16,36,33,0.18)] backdrop-blur-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xl font-semibold text-ink">{modalTitle}</p>
+                <p className="mt-2 text-sm text-muted">{modalSubtitle}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="text-sm font-semibold text-slate-500 transition hover:text-ink"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <form onSubmit={handleAddHostel}>
+              <FormField label="Hostel name">
+                <input
+                  autoFocus
+                  className="input-base"
+                  value={newHostel}
+                  onChange={(event) => setNewHostel(event.target.value)}
+                  placeholder="Enter hostel name"
+                />
+              </FormField>
+
+              {errorMessage ? (
+                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  {errorMessage}
+                </p>
+              ) : null}
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="submit"
+                  disabled={submitting || !newHostel.trim()}
+                  className="primary-button flex-1"
+                >
+                  {submitting ? "Saving..." : editingHostelId ? "Save name" : "Add hostel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingHostelId(null);
+                    setNewHostel("");
+                    setErrorMessage("");
+                  }}
+                  className="secondary-button flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

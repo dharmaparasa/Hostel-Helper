@@ -28,6 +28,28 @@ export async function fetchHostels() {
   return data || [];
 }
 
+export async function getTenantCountForHostel(hostelId) {
+  if (!hostelId) {
+    throw new Error("Hostel ID is required to count tenants.");
+  }
+
+  const client = getSupabaseClient();
+  if (!client) {
+    return 0;
+  }
+
+  const { count, error } = await client
+    .from("tenants")
+    .select("id", { count: "exact", head: true })
+    .eq("hostel_id", hostelId);
+
+  if (error) {
+    throw error;
+  }
+
+  return count || 0;
+}
+
 export async function createHostel(name) {
   if (!name) {
     throw new Error("Hostel name is required.");
