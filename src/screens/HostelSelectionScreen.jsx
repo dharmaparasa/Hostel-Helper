@@ -5,6 +5,7 @@ import { HostelCard } from "../components/HostelCard";
 import { FormField } from "../components/FormField";
 import { BuildingIcon, PlusIcon, ShieldIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
+import { useToast } from "../context/ToastContext";
 
 export function HostelSelectionScreen() {
   const navigate = useNavigate();
@@ -16,9 +17,12 @@ export function HostelSelectionScreen() {
     updateHostel,
     removeHostel
   } = useAppContext();
+  const { showToast } = useToast();
   const [newHostel, setNewHostel] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingHostelId, setEditingHostelId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const previewEmpty =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("preview") === "empty";
@@ -26,21 +30,32 @@ export function HostelSelectionScreen() {
   const canContinue = visibleHostels.length > 0;
   const guideSlots = Math.max(0, 2 - visibleHostels.length);
 
-  const handleAddHostel = () => {
+  const handleAddHostel = async () => {
     if (!newHostel.trim()) {
       setShowForm(true);
       return;
     }
 
-    if (editingHostelId) {
-      updateHostel(editingHostelId, { name: newHostel.trim() });
-      setEditingHostelId(null);
-    } else {
-      addHostel(newHostel.trim());
-    }
+    setErrorMessage("");
+    setSubmitting(true);
 
-    setNewHostel("");
-    setShowForm(false);
+    try {
+      if (editingHostelId) {
+        await updateHostel(editingHostelId, { name: newHostel.trim() });
+        showToast("Hostel updated successfully");
+        setEditingHostelId(null);
+      } else {
+        await addHostel(newHostel.trim());
+        showToast("Hostel added successfully");
+      }
+      setNewHostel("");
+      setShowForm(false);
+    } catch (error) {
+      console.error("Hostel save failed:", error);
+      setErrorMessage(error?.message || "Unable to save hostel. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const openRenameForm = (hostel) => {
@@ -49,17 +64,25 @@ export function HostelSelectionScreen() {
     setShowForm(true);
   };
 
-  const handleRemoveHostel = (hostel) => {
+  const handleRemoveHostel = async (hostel) => {
     const confirmed = window.confirm(
       `Remove "${hostel.name}" and its tenants from this demo?`
     );
-    if (confirmed) {
-      removeHostel(hostel.id);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await removeHostel(hostel.id);
+      showToast("Hostel removed");
       if (editingHostelId === hostel.id) {
         setEditingHostelId(null);
         setNewHostel("");
         setShowForm(false);
       }
+    } catch (error) {
+      console.error("Remove hostel failed:", error);
+      setErrorMessage(error?.message || "Unable to remove hostel. Please try again.");
     }
   };
 
@@ -123,8 +146,13 @@ export function HostelSelectionScreen() {
                   />
                 </FormField>
                 <div className="mt-4 flex gap-2">
-                  <button type="button" onClick={handleAddHostel} className="primary-button flex-1">
-                    {editingHostelId ? "Save Name" : "Save Hostel"}
+                  <button
+                    type="button"
+                    onClick={handleAddHostel}
+                    disabled={submitting || !newHostel.trim()}
+                    className="primary-button flex-1"
+                  >
+                    {submitting ? "Saving..." : editingHostelId ? "Save Name" : "Save Hostel"}
                   </button>
                   <button
                     type="button"
@@ -132,12 +160,18 @@ export function HostelSelectionScreen() {
                       setShowForm(false);
                       setEditingHostelId(null);
                       setNewHostel("");
+                      setErrorMessage("");
                     }}
                     className="secondary-button flex-1"
                   >
                     Cancel
                   </button>
                 </div>
+                {errorMessage ? (
+                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                    {errorMessage}
+                  </p>
+                ) : null}
                 {editingHostelId ? (
                   <button
                     type="button"
@@ -183,7 +217,13 @@ export function HostelSelectionScreen() {
                   onDelete={() => handleRemoveHostel(hostel)}
                 />
               ))}
-              {Array.from({ length: guideSlots }).map((_, index) => (
+              <HostelCard
+                key="add-hostel-card"
+                hostel={{ name: "Add hostel" }}
+                isAddCard
+                onClick={() => setShowForm(true)}
+              />
+              {Array.from({ length: Math.max(0, 1 - visibleHostels.length) }).map((_, index) => (
                 <div
                   key={`guide-slot-${index}`}
                   className="panel flex min-h-28 flex-col items-center justify-center gap-2 px-4 py-5 text-center text-[#c9cfce] shadow-soft"
@@ -223,8 +263,13 @@ export function HostelSelectionScreen() {
                   />
                 </FormField>
                 <div className="mt-4 flex gap-2">
-                  <button type="button" onClick={handleAddHostel} className="primary-button flex-1">
-                    {editingHostelId ? "Save Name" : "Save Hostel"}
+                  <button
+                    type="button"
+                    onClick={handleAddHostel}
+                    disabled={submitting || !newHostel.trim()}
+                    className="primary-button flex-1"
+                  >
+                    {submitting ? "Saving..." : editingHostelId ? "Save Name" : "Save Hostel"}
                   </button>
                   <button
                     type="button"
@@ -232,12 +277,18 @@ export function HostelSelectionScreen() {
                       setShowForm(false);
                       setEditingHostelId(null);
                       setNewHostel("");
+                      setErrorMessage("");
                     }}
                     className="secondary-button flex-1"
                   >
                     Cancel
                   </button>
                 </div>
+                {errorMessage ? (
+                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                    {errorMessage}
+                  </p>
+                ) : null}
                 {editingHostelId ? (
                   <button
                     type="button"

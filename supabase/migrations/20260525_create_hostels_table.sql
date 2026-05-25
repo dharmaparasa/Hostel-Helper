@@ -14,3 +14,4 @@ create policy if not exists "Owners can manage own hostels" on public.hostels
   for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 
 create unique index if not exists hostels_owner_id_name_idx on public.hostels(owner_id, name);
+
