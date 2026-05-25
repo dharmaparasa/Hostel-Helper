@@ -2,11 +2,11 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { seedData } from "../data/seed";
 import { sendEmailLogin, signUpUser, signInWithGoogle, signInWithPassword as supabaseSignInWithPassword, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
 import {
-  createHostelForOwner,
-  deleteHostelForOwner,
-  fetchHostelsByOwner,
+  createHostel,
+  deleteHostel,
+  fetchHostels,
   isUserVerified,
-  updateHostelForOwner
+  updateHostel as updateHostelRemote
 } from "../lib/supabase/hostels";
 import {
   persistDemoSession,
@@ -21,6 +21,18 @@ function buildInitialState() {
   const stored = restoreState();
   if (stored) {
     return stored;
+  }
+
+  const hasSupabase = Boolean(
+    import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
+  if (hasSupabase) {
+    return {
+      selectedHostelId: "all",
+      hostels: [],
+      tenants: []
+    };
   }
 
   return seedData;
@@ -76,19 +88,23 @@ export function AppProvider({ children }) {
       }
 
       try {
-        const remoteHostels = await fetchHostelsByOwner(session.user.id);
-        if (mounted && remoteHostels.length > 0) {
-          setAppState((current) => ({
-            ...current,
-            hostels: remoteHostels,
-            selectedHostelId:
-              current.selectedHostelId === "all"
-                ? remoteHostels[0]?.id || "all"
-                : current.selectedHostelId
-          }));
+        const remoteHostels = await fetchHostels();
+        if (mounted) {
+          setAppState((current) => {
+            const nextSelected =
+              remoteHostels.find((item) => item.id === current.selectedHostelId)?.id ||
+              remoteHostels[0]?.id ||
+              "all";
+
+            return {
+              ...current,
+              hostels: remoteHostels,
+              selectedHostelId: nextSelected
+            };
+          });
         }
       } catch (error) {
-        console.error("Failed to load hostels for owner:", error);
+        console.error("Failed to load hostels for user:", error);
       }
     }
 
@@ -111,11 +127,9 @@ export function AppProvider({ children }) {
         );
 
   const addHostel = async (name) => {
-    const ownerId = session?.user?.id;
-
     if (session && getSupabaseClient() && isUserVerified(session.user)) {
       try {
-        const hostel = await createHostelForOwner(name, ownerId);
+        const hostel = await createHostel(name);
         if (hostel) {
           setAppState((current) => ({
             ...current,
@@ -149,7 +163,7 @@ export function AppProvider({ children }) {
   const updateHostel = async (hostelId, updates) => {
     if (session && getSupabaseClient() && isUserVerified(session.user)) {
       try {
-        await updateHostelForOwner(hostelId, session.user.id, updates);
+        await updateHostelRemote(hostelId, updates);
       } catch (error) {
         console.error("Update hostel failed:", error);
       }
@@ -166,7 +180,7 @@ export function AppProvider({ children }) {
   const removeHostel = async (hostelId) => {
     if (session && getSupabaseClient() && isUserVerified(session.user)) {
       try {
-        await deleteHostelForOwner(hostelId, session.user.id);
+        await deleteHostel(hostelId);
       } catch (error) {
         console.error("Delete hostel failed:", error);
       }

@@ -11,8 +11,6 @@ export function HostelSelectionScreen() {
   const navigate = useNavigate();
   const {
     hostels,
-    selectedHostelId,
-    selectHostel,
     addHostel,
     updateHostel,
     removeHostel
@@ -100,7 +98,7 @@ export function HostelSelectionScreen() {
           subtitle={
             visibleHostels.length === 0
               ? "Add the hostels you manage"
-              : "Pick one hostel to see tenants"
+              : "Manage the hostels and add tenants to them"
           }
         />
         {visibleHostels.length === 0 ? (
@@ -211,8 +209,7 @@ export function HostelSelectionScreen() {
                 <HostelCard
                   key={hostel.id}
                   hostel={hostel}
-                  selected={selectedHostelId === hostel.id}
-                  onClick={() => selectHostel(hostel.id)}
+                  onClick={() => openRenameForm(hostel)}
                   onEdit={() => openRenameForm(hostel)}
                   onDelete={() => handleRemoveHostel(hostel)}
                 />

@@ -10,11 +10,7 @@ export function isUserVerified(user) {
   );
 }
 
-export async function fetchHostelsByOwner(ownerId) {
-  if (!ownerId) {
-    return [];
-  }
-
+export async function fetchHostels() {
   const client = getSupabaseClient();
   if (!client) {
     return [];
@@ -22,8 +18,8 @@ export async function fetchHostelsByOwner(ownerId) {
 
   const { data, error } = await client
     .from(TABLE_NAME)
-    .select("id, name, owner_id")
-    .eq("owner_id", ownerId);
+    .select("id, name")
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw error;
@@ -32,9 +28,9 @@ export async function fetchHostelsByOwner(ownerId) {
   return data || [];
 }
 
-export async function createHostelForOwner(name, ownerId) {
-  if (!name || !ownerId) {
-    throw new Error("Hostel name and authenticated owner ID are required.");
+export async function createHostel(name) {
+  if (!name) {
+    throw new Error("Hostel name is required.");
   }
 
   const client = getSupabaseClient();
@@ -44,8 +40,8 @@ export async function createHostelForOwner(name, ownerId) {
 
   const { data, error } = await client
     .from(TABLE_NAME)
-    .insert({ name, owner_id: ownerId })
-    .select("id, name, owner_id")
+    .insert({ name })
+    .select("id, name")
     .single();
 
   if (error) {
@@ -55,9 +51,9 @@ export async function createHostelForOwner(name, ownerId) {
   return data;
 }
 
-export async function updateHostelForOwner(hostelId, ownerId, updates) {
-  if (!hostelId || !ownerId) {
-    throw new Error("Hostel ID and owner ID are required for update.");
+export async function updateHostel(hostelId, updates) {
+  if (!hostelId) {
+    throw new Error("Hostel ID is required for update.");
   }
 
   const client = getSupabaseClient();
@@ -69,8 +65,7 @@ export async function updateHostelForOwner(hostelId, ownerId, updates) {
     .from(TABLE_NAME)
     .update(updates)
     .eq("id", hostelId)
-    .eq("owner_id", ownerId)
-    .select("id, name, owner_id")
+    .select("id, name")
     .single();
 
   if (error) {
@@ -80,9 +75,9 @@ export async function updateHostelForOwner(hostelId, ownerId, updates) {
   return data;
 }
 
-export async function deleteHostelForOwner(hostelId, ownerId) {
-  if (!hostelId || !ownerId) {
-    throw new Error("Hostel ID and owner ID are required for delete.");
+export async function deleteHostel(hostelId) {
+  if (!hostelId) {
+    throw new Error("Hostel ID is required for delete.");
   }
 
   const client = getSupabaseClient();
@@ -93,8 +88,7 @@ export async function deleteHostelForOwner(hostelId, ownerId) {
   const { error } = await client
     .from(TABLE_NAME)
     .delete()
-    .eq("id", hostelId)
-    .eq("owner_id", ownerId);
+    .eq("id", hostelId);
 
   if (error) {
     throw error;
