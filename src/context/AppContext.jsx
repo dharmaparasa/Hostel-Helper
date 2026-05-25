@@ -2,6 +2,13 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { seedData } from "../data/seed";
 import { sendEmailLogin, signUpUser, signInWithGoogle, signInWithPassword as supabaseSignInWithPassword, getSupabaseClient, loadSession, signOut } from "../lib/supabase";
 import {
+  createHostelForOwner,
+  deleteHostelForOwner,
+  fetchHostelsByOwner,
+  isUserVerified,
+  updateHostelForOwner
+} from "../lib/supabase/hostels";
+import {
   persistDemoSession,
   persistState,
   restoreDemoSession,
@@ -60,6 +67,38 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadRemoteHostels() {
+      if (!session || !getSupabaseClient() || !isUserVerified(session.user)) {
+        return;
+      }
+
+      try {
+        const remoteHostels = await fetchHostelsByOwner(session.user.id);
+        if (mounted && remoteHostels.length > 0) {
+          setAppState((current) => ({
+            ...current,
+            hostels: remoteHostels,
+            selectedHostelId:
+              current.selectedHostelId === "all"
+                ? remoteHostels[0]?.id || "all"
+                : current.selectedHostelId
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to load hostels for owner:", error);
+      }
+    }
+
+    loadRemoteHostels();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session]);
+
   const selectedHostel = appState.hostels.find(
     (hostel) => hostel.id === appState.selectedHostelId
   );
@@ -71,7 +110,26 @@ export function AppProvider({ children }) {
           (tenant) => tenant.hostelId === appState.selectedHostelId
         );
 
-  const addHostel = (name) => {
+  const addHostel = async (name) => {
+    const ownerId = session?.user?.id;
+
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      try {
+        const hostel = await createHostelForOwner(name, ownerId);
+        if (hostel) {
+          setAppState((current) => ({
+            ...current,
+            hostels: [...current.hostels, hostel],
+            selectedHostelId: hostel.id
+          }));
+          return hostel;
+        }
+      } catch (error) {
+        console.error("Create hostel failed:", error);
+        throw error;
+      }
+    }
+
     const hostel = {
       id: crypto.randomUUID(),
       name,
@@ -84,9 +142,19 @@ export function AppProvider({ children }) {
       hostels: [...current.hostels, hostel],
       selectedHostelId: hostel.id
     }));
+
+    return hostel;
   };
 
-  const updateHostel = (hostelId, updates) => {
+  const updateHostel = async (hostelId, updates) => {
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      try {
+        await updateHostelForOwner(hostelId, session.user.id, updates);
+      } catch (error) {
+        console.error("Update hostel failed:", error);
+      }
+    }
+
     setAppState((current) => ({
       ...current,
       hostels: current.hostels.map((hostel) =>
@@ -95,7 +163,15 @@ export function AppProvider({ children }) {
     }));
   };
 
-  const removeHostel = (hostelId) => {
+  const removeHostel = async (hostelId) => {
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      try {
+        await deleteHostelForOwner(hostelId, session.user.id);
+      } catch (error) {
+        console.error("Delete hostel failed:", error);
+      }
+    }
+
     setAppState((current) => {
       const nextHostels = current.hostels.filter((hostel) => hostel.id !== hostelId);
       const nextTenants = current.tenants.filter((tenant) => tenant.hostelId !== hostelId);
