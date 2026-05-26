@@ -83,7 +83,7 @@ export function SignupScreen() {
                 className="input-base"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. John's Hostel"
+                placeholder="e.g. Srinivasa Rao"
                 type="text"
               />
               {name && !isNameValid && (
@@ -94,8 +94,8 @@ export function SignupScreen() {
                   {!nameValidation.startsWithLetters && (
                     <div>First 4 characters must be letters only</div>
                   )}
-                  {!nameValidation.isAlphanumeric && (
-                    <div>Special characters are not allowed</div>
+                  {!nameValidation.onlyLettersAndSpaces && (
+                    <div>Only letters and spaces are allowed</div>
                   )}
                 </div>
               )}
