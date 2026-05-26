@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MonthBubble } from "../components/MonthBubble";
+import { LogoutButton } from "../components/LogoutButton";
 import { BackIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
@@ -68,9 +69,12 @@ export function TenantDetailScreen() {
             <p className="text-xs text-white/80">{`Room ${tenant.roomNumber}`}</p>
           </div>
         </div>
-        <span className="rounded-full bg-rose-500 px-3 py-1.5 text-[13px] font-bold text-white">
-          Due {formatCurrency(totalDue)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-rose-500 px-3 py-1.5 text-[13px] font-bold text-white">
+            Due {formatCurrency(totalDue)}
+          </span>
+          <LogoutButton />
+        </div>
       </div>
 
       <div className="screen-pad flex min-h-[calc(100svh-84px)] flex-col justify-end pb-6">

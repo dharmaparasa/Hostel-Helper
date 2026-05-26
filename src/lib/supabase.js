@@ -2,6 +2,18 @@ import { createClient } from "@supabase/supabase-js";
 
 let supabase;
 
+function isInvalidSessionError(error) {
+  const message = error?.message?.toLowerCase() || "";
+  return (
+    error?.status === 401 ||
+    error?.status === 403 ||
+    message.includes("invalid") ||
+    message.includes("expired") ||
+    message.includes("jwt") ||
+    message.includes("session")
+  );
+}
+
 export function getSupabaseClient() {
   if (supabase) {
     return supabase;
@@ -30,7 +42,30 @@ export async function loadSession() {
     return null;
   }
 
-  const { data } = await client.auth.getSession();
+  const { data, error } = await client.auth.getSession();
+  if (error || !data.session) {
+    return null;
+  }
+
+  const {
+    data: { user },
+    error: userError
+  } = await client.auth.getUser();
+
+  if (userError) {
+    if (isInvalidSessionError(userError)) {
+      await client.auth.signOut();
+      return null;
+    }
+
+    return data.session;
+  }
+
+  if (!user) {
+    await client.auth.signOut();
+    return null;
+  }
+
   return data.session;
 }
 

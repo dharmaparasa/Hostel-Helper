@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomBar } from "../components/BottomBar";
 import { FormField } from "../components/FormField";
+import { LogoutButton } from "../components/LogoutButton";
 import { BackIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
@@ -96,9 +97,12 @@ export function AddTenantScreen() {
           </button>
           <span className="top-app-bar-title">Add New Tenant</span>
         </div>
-        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
-          Form
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+            Form
+          </span>
+          <LogoutButton />
+        </div>
       </div>
       <div className="screen-pad space-y-4 pb-36">
         <div className="subtle-panel grid gap-4 p-4">

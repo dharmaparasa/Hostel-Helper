@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
+import { LogoutButton } from "../components/LogoutButton";
 import { PendingRequests } from "../components/PendingRequests";
 import { TenantCard } from "../components/TenantCard";
 import { ChevronDownIcon, PlusIcon, SearchIcon } from "../components/icons";
@@ -8,7 +9,7 @@ import { useAppContext } from "../context/AppContext";
 
 export function TenantListScreen() {
   const navigate = useNavigate();
-  const { hostels, selectedHostelId, selectHostel, tenants, tenantRequests, logout } = useAppContext();
+  const { hostels, selectedHostelId, selectHostel, tenants, tenantRequests } = useAppContext();
   const [query, setQuery] = useState("");
   const pendingRequestCount = tenantRequests.filter((request) => request.status === "PENDING").length;
 
@@ -35,13 +36,7 @@ export function TenantListScreen() {
           <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-semibold text-white">
             Requests {pendingRequestCount}
           </span>
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white"
-          >
-            Logout
-          </button>
+          <LogoutButton />
         </div>
       </div>
 

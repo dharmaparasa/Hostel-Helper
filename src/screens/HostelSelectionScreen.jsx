@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { HostelCard } from "../components/HostelCard";
 import { FormField } from "../components/FormField";
+import { LogoutButton } from "../components/LogoutButton";
 import { BuildingIcon, PlusIcon, ShieldIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
@@ -133,9 +134,12 @@ export function HostelSelectionScreen() {
     <>
       <div className="top-app-bar">
         <span className="top-app-bar-title">HostelPay</span>
-        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
-          Setup
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+            Setup
+          </span>
+          <LogoutButton />
+        </div>
       </div>
       <div className="screen-pad pb-28">
         <Header

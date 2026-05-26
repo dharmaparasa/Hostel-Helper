@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BackIcon, WhatsAppIcon } from "../components/icons";
+import { LogoutButton } from "../components/LogoutButton";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { buildOnboardingUrl, buildWhatsAppShareUrl } from "../lib/onboardingUrl";
@@ -95,9 +96,12 @@ export function OwnerOnboardingQrScreen() {
           </button>
           <span className="top-app-bar-title">Tenant QR</span>
         </div>
-        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
-          Ready
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+            Ready
+          </span>
+          <LogoutButton />
+        </div>
       </div>
 
       <div className="screen-pad space-y-4">
