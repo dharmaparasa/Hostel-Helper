@@ -8,6 +8,11 @@ import {
   isUserVerified,
   updateHostel as updateHostelRemote
 } from "../lib/supabase/hostels";
+import { ensureCurrentOwnerProfile, fetchCurrentOwner } from "../lib/supabase/owners";
+import {
+  fetchTenantRequests,
+  updateTenantRequestStatus
+} from "../lib/supabase/tenantRequests";
 import {
   persistDemoSession,
   persistState,
@@ -42,6 +47,8 @@ export function AppProvider({ children }) {
   const [appState, setAppState] = useState(buildInitialState);
   const [session, setSession] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [tenantRequests, setTenantRequests] = useState([]);
 
   useEffect(() => {
     persistState(appState);
@@ -82,14 +89,20 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    async function loadRemoteHostels() {
+    async function loadRemoteData() {
       if (!session || !getSupabaseClient() || !isUserVerified(session.user)) {
         return;
       }
 
       try {
-        const remoteHostels = await fetchHostels();
+        const [remoteHostels, remoteOwner, remoteRequests] = await Promise.all([
+          fetchHostels(),
+          fetchCurrentOwner(),
+          fetchTenantRequests()
+        ]);
         if (mounted) {
+          setOwnerProfile(remoteOwner);
+          setTenantRequests(remoteRequests);
           setAppState((current) => {
             const nextSelected =
               remoteHostels.find((item) => item.id === current.selectedHostelId)?.id ||
@@ -104,11 +117,11 @@ export function AppProvider({ children }) {
           });
         }
       } catch (error) {
-        console.error("Failed to load hostels for user:", error);
+        console.error("Failed to load remote data for user:", error);
       }
     }
 
-    loadRemoteHostels();
+    loadRemoteData();
 
     return () => {
       mounted = false;
@@ -129,6 +142,8 @@ export function AppProvider({ children }) {
   const addHostel = async (name) => {
     if (session && getSupabaseClient() && isUserVerified(session.user)) {
       try {
+        const owner = await ensureCurrentOwnerProfile();
+        setOwnerProfile(owner);
         const hostel = await createHostel(name);
         if (hostel) {
           setAppState((current) => ({
@@ -150,6 +165,14 @@ export function AppProvider({ children }) {
       totalRooms: "",
       location: ""
     };
+
+    setOwnerProfile((current) =>
+      current || {
+        id: "demo-owner",
+        owner_name: session?.user?.email?.split("@")[0] || "Hostel owner",
+        onboarding_token: "own_DEMO12345"
+      }
+    );
 
     setAppState((current) => ({
       ...current,
@@ -221,6 +244,93 @@ export function AppProvider({ children }) {
       tenants: [tenant, ...current.tenants]
     }));
 
+    return tenant;
+  };
+
+  const refreshTenantRequests = async () => {
+    if (!session || !getSupabaseClient() || !isUserVerified(session.user)) {
+      return [];
+    }
+
+    const requests = await fetchTenantRequests();
+    setTenantRequests(requests);
+    return requests;
+  };
+
+  const ensureOwnerProfile = async () => {
+    if (!session || !getSupabaseClient() || !isUserVerified(session.user)) {
+      const demoOwner =
+        ownerProfile || {
+          id: "demo-owner",
+          owner_name: session?.user?.email?.split("@")[0] || "Hostel owner",
+          onboarding_token: "own_DEMO12345"
+        };
+      setOwnerProfile(demoOwner);
+      return demoOwner;
+    }
+
+    const owner = await ensureCurrentOwnerProfile();
+    setOwnerProfile(owner);
+    return owner;
+  };
+
+  const rejectTenantRequest = async (requestId) => {
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      const updated = await updateTenantRequestStatus(requestId, "REJECTED");
+      setTenantRequests((current) =>
+        current.map((request) => (request.id === requestId ? updated : request))
+      );
+      return updated;
+    }
+
+    setTenantRequests((current) =>
+      current.map((request) =>
+        request.id === requestId ? { ...request, status: "REJECTED" } : request
+      )
+    );
+    return null;
+  };
+
+  const activateTenantRequest = async (request, activationInput) => {
+    const monthKey = (activationInput.entryDate || new Date().toISOString().slice(0, 10)).slice(0, 7);
+    const rentAmount = Number(activationInput.monthlyRent || 0);
+    const depositAmount = Number(activationInput.deposit || 0);
+    const tenantInput = {
+      name: request.full_name.trim(),
+      age: "",
+      mobile: request.phone.trim(),
+      hostelId: activationInput.hostelId,
+      roomNumber: activationInput.roomNumber.trim(),
+      entryDate: activationInput.entryDate,
+      monthlyRent: rentAmount,
+      additionalFees: depositAmount,
+      purposeOfStay: request.notes || "QR onboarding",
+      months: [
+        {
+          id: `${monthKey}-${request.full_name.toLowerCase().replaceAll(" ", "-")}`,
+          monthKey,
+          rentDue: rentAmount + depositAmount,
+          paid: 0,
+          dueDate: `${monthKey}-05`,
+          closedOn: null
+        }
+      ]
+    };
+
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      const updated = await updateTenantRequestStatus(request.id, "ACTIVATED");
+      setTenantRequests((current) =>
+        current.map((item) => (item.id === request.id ? updated : item))
+      );
+    } else {
+      setTenantRequests((current) =>
+        current.map((item) =>
+          item.id === request.id ? { ...item, status: "ACTIVATED" } : item
+        )
+      );
+    }
+
+    const tenant = addTenant(tenantInput);
     return tenant;
   };
 
@@ -296,12 +406,18 @@ export function AppProvider({ children }) {
       tenants,
       session,
       isReady,
+      ownerProfile,
+      tenantRequests,
       addHostel,
       updateHostel,
       removeHostel,
       selectHostel,
       addTenant,
       addPayment,
+      refreshTenantRequests,
+      ensureOwnerProfile,
+      rejectTenantRequest,
+      activateTenantRequest,
       sendLoginEmail,
       signUp,
       signInWithPassword,
@@ -309,7 +425,7 @@ export function AppProvider({ children }) {
       startDemoSession,
       logout
     }),
-    [appState, selectedHostel, tenants, session, isReady]
+    [appState, selectedHostel, tenants, session, isReady, ownerProfile, tenantRequests]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

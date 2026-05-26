@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
+import { PendingRequests } from "../components/PendingRequests";
 import { TenantCard } from "../components/TenantCard";
 import { ChevronDownIcon, PlusIcon, SearchIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 
 export function TenantListScreen() {
   const navigate = useNavigate();
-  const { hostels, selectedHostel, selectedHostelId, selectHostel, tenants, logout } = useAppContext();
+  const { hostels, selectedHostelId, selectHostel, tenants, tenantRequests, logout } = useAppContext();
   const [query, setQuery] = useState("");
-  const pendingCount = filteredCount(tenants);
+  const pendingRequestCount = tenantRequests.filter((request) => request.status === "PENDING").length;
 
   const filteredTenants = useMemo(() => {
     const lowerQuery = query.trim().toLowerCase();
@@ -32,7 +33,7 @@ export function TenantListScreen() {
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-semibold text-white">
-            Pending {pendingCount}
+            Requests {pendingRequestCount}
           </span>
           <button
             type="button"
@@ -80,6 +81,8 @@ export function TenantListScreen() {
           />
         </label>
 
+        <PendingRequests />
+
         {filteredTenants.length === 0 ? (
           <EmptyState
             title="No tenants yet"
@@ -111,10 +114,4 @@ export function TenantListScreen() {
       </button>
     </div>
   );
-}
-
-function filteredCount(tenants) {
-  return tenants.filter((tenant) =>
-    tenant.months.some((month) => month.paid < month.rentDue)
-  ).length;
 }

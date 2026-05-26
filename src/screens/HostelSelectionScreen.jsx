@@ -54,6 +54,9 @@ export function HostelSelectionScreen() {
       } else {
         await addHostel(newHostel.trim());
         showToast("Hostel added successfully");
+        if (hostels.length === 0 && !window.localStorage.getItem("owner-qr-introduced")) {
+          navigate("/owner/onboarding-qr", { replace: true });
+        }
       }
       setNewHostel("");
       setShowForm(false);

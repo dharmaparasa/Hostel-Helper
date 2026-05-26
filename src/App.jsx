@@ -11,6 +11,8 @@ import { HostelSelectionScreen } from "./screens/HostelSelectionScreen";
 import { TenantListScreen } from "./screens/TenantListScreen";
 import { AddTenantScreen } from "./screens/AddTenantScreen";
 import { TenantDetailScreen } from "./screens/TenantDetailScreen";
+import { OwnerOnboardingQrScreen } from "./screens/OwnerOnboardingQrScreen";
+import { PublicJoinScreen } from "./screens/PublicJoinScreen";
 
 function AppRoutes() {
   const { isReady, session, hostels } = useAppContext();
@@ -47,6 +49,7 @@ function AppRoutes() {
       />
 
       <Route path="/check-email" element={<CheckEmailScreen />} />
+      <Route path="/join/:token" element={<PublicJoinScreen />} />
 
       {/* Protected Routes */}
       <Route
@@ -61,6 +64,17 @@ function AppRoutes() {
         <Route path="/hostels" element={<HostelSelectionScreen />} />
 
         {/* Tenant Routes */}
+        <Route
+          path="/owner/onboarding-qr"
+          element={
+            hasHostels ? (
+              <OwnerOnboardingQrScreen />
+            ) : (
+              <Navigate to="/hostels" replace />
+            )
+          }
+        />
+
         <Route
           path="/tenants"
           element={
