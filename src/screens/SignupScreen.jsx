@@ -97,6 +97,9 @@ export function SignupScreen() {
                   {!nameValidation.onlyLettersAndSpaces && (
                     <div>Only letters and spaces are allowed</div>
                   )}
+                  {!nameValidation.vowelWindow && (
+                    <div>Please check your spelling</div>
+                  )}
                 </div>
               )}
             </FormField>

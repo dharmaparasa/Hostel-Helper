@@ -17,7 +17,8 @@ export const NAME_REQUIREMENTS = {
   alphanumericPattern: /^[a-zA-Z0-9\s\-]*$/, // Only letters, numbers, spaces, and hyphens
   noSpecialChars: /[!@#$%^&*()_+=\[\]{};:'",.<>?/\\|`~]/,
   startWithLetters: /^[a-zA-Z]{4,}/, // First 4+ characters must be letters
-  onlyLettersAndSpaces: /^[a-zA-Z\s]*$/ // Only letters and spaces allowed
+  onlyLettersAndSpaces: /^[a-zA-Z\s]*$/, // Only letters and spaces allowed
+  vowelWindowPattern: /^(?!.*[bcdfghjklmnpqrstvwxz]{4})[a-zA-Z\s]+$/i
 };
 
 export function validateName(name) {
@@ -29,7 +30,8 @@ export function validateName(name) {
     startsWithLetters: startsWithLetters,
     isAlphanumeric: NAME_REQUIREMENTS.alphanumericPattern.test(trimmedName),
     noSpecialChars: !NAME_REQUIREMENTS.noSpecialChars.test(trimmedName),
-    onlyLettersAndSpaces: NAME_REQUIREMENTS.onlyLettersAndSpaces.test(trimmedName)
+    onlyLettersAndSpaces: NAME_REQUIREMENTS.onlyLettersAndSpaces.test(trimmedName),
+    vowelWindow: NAME_REQUIREMENTS.vowelWindowPattern.test(trimmedName)
   };
 }
 
