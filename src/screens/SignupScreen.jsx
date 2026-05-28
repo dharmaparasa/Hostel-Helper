@@ -26,25 +26,15 @@ export function SignupScreen() {
   const isPasswordValidated = isPasswordValid(password);
   const isFormValid = isNameValid && isEmailValid && isPasswordValidated && !loading;
 
-  // Debug logs when user is interacting with the form
-  if (password || email || name) {
-    console.log("Form validation debug:", {
-      name: trimmedName,
-      isNameValid,
-      email,
-      isEmailValid,
-      password,
-      passwordValidation,
-      isPasswordValidated,
-      isFormValid,
-      buttonDisabled: !isFormValid
-    });
-  }
-
   const handleSignup = async () => {
+    if (!isFormValid) {
+      showToast("Please enter a valid name, email, and password");
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await signUp(email, password, name);
+      const result = await signUp(email.trim(), password, trimmedName);
       if (result?.demo) {
         // For demo mode, create a demo session and navigate in
         startDemoSession(email);

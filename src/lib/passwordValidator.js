@@ -39,9 +39,9 @@ export function isNameValid(name) {
   const trimmedName = name.trim();
   return (
     trimmedName.length >= NAME_REQUIREMENTS.minLength &&
-    // NAME_REQUIREMENTS.startWithLetters.test(trimmedName) &&
-    // NAME_REQUIREMENTS.alphanumericPattern.test(trimmedName)
-    NAME_REQUIREMENTS.onlyLettersAndSpaces.test(trimmedName)
+    NAME_REQUIREMENTS.startWithLetters.test(trimmedName) &&
+    NAME_REQUIREMENTS.onlyLettersAndSpaces.test(trimmedName) &&
+    NAME_REQUIREMENTS.vowelWindowPattern.test(trimmedName)
   );
 }
 
