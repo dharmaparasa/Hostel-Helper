@@ -47,7 +47,7 @@ export function PublicJoinScreen() {
       } catch (error) {
         console.error("Resolve onboarding owner failed:", error);
         if (mounted) {
-          setErrorMessage("Unable to open this onboarding form. Please ask the owner for a fresh QR.");
+          setErrorMessage("Unable to open this onboarding form. Please ask the owner to check the onboarding link.");
         }
       } finally {
         if (mounted) {

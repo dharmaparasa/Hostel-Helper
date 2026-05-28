@@ -3,10 +3,16 @@ export function buildOnboardingUrl(token) {
     return "";
   }
 
-  const origin =
-    typeof window === "undefined" ? "" : window.location.origin;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const base = import.meta.env.BASE_URL || "/";
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const joinPath = `join/${encodeURIComponent(token)}`;
 
-  return `${origin}/join/${token}`;
+  if (!origin) {
+    return `${normalizedBase}${joinPath}`;
+  }
+
+  return new URL(joinPath, `${origin}${normalizedBase}`).toString();
 }
 
 export function buildWhatsAppShareUrl(onboardingUrl, ownerName) {
