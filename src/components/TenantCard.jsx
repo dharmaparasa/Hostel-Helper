@@ -1,5 +1,55 @@
 import { formatCurrency, getDueMeta } from "../lib/format";
 
+function addMonths(date, count) {
+  return new Date(date.getFullYear(), date.getMonth() + count, date.getDate());
+}
+
+function getCoverageMeta(tenant, openMonth, dueMeta) {
+  const month = openMonth || tenant.months[0];
+  const rentDue = Number(month?.rentDue || tenant.monthlyRent || 0);
+  const paid = Number(month?.paid || 0);
+
+  if (!month || rentDue <= 0) {
+    return {
+      percent: 0,
+      color: "#ef4444",
+      shadow: "rgba(239,68,68,0.18)"
+    };
+  }
+
+  const dueDate = new Date(month.dueDate || `${month.monthKey}-05`);
+  const nextDueDate = addMonths(dueDate, 1);
+  const today = new Date();
+  const periodMs = Math.max(nextDueDate - dueDate, 1);
+  const elapsedMs = Math.max(today - dueDate, 0);
+  const consumedRent = rentDue * Math.min(elapsedMs / periodMs, 1);
+  const remainingAdvance = Math.max(paid - consumedRent, 0);
+  const coverageRatio = Math.min(remainingAdvance / rentDue, 1);
+  const percent = Math.round(coverageRatio * 100);
+
+  if (dueMeta.tone === "late" || percent <= 0) {
+    return {
+      percent,
+      color: "#ef4444",
+      shadow: "rgba(239,68,68,0.16)"
+    };
+  }
+
+  if (percent <= 25 || dueMeta.tone === "due") {
+    return {
+      percent: Math.max(percent, 8),
+      color: "#f59e0b",
+      shadow: "rgba(245,158,11,0.18)"
+    };
+  }
+
+  return {
+    percent,
+    color: "#10b981",
+    shadow: "rgba(16,185,129,0.16)"
+  };
+}
+
 export function TenantCard({ tenant, onClick }) {
   const openMonth = tenant.months.find((month) => month.paid < month.rentDue) || tenant.months[0];
   const dueAmount = tenant.months.reduce(
@@ -13,13 +63,24 @@ export function TenantCard({ tenant, onClick }) {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+  const coverageMeta = getCoverageMeta(tenant, openMonth, dueMeta);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="subtle-panel flex w-full items-center gap-3 p-3 text-left"
+      className="subtle-panel relative flex w-full items-center gap-3 overflow-hidden p-3 pt-4 text-left"
     >
+      <div className="absolute left-3 right-3 top-2 h-[3px] overflow-hidden rounded-full bg-[#E7F3F1]">
+        <div
+          className="h-full rounded-full transition-[width,background-color,box-shadow] duration-700 ease-out"
+          style={{
+            width: `${coverageMeta.percent}%`,
+            backgroundColor: coverageMeta.color,
+            boxShadow: `0 0 10px ${coverageMeta.shadow}`
+          }}
+        />
+      </div>
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand">
         {initials}
       </div>

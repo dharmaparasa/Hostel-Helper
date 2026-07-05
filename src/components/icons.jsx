@@ -90,3 +90,32 @@ export function PencilIcon({ className = "h-4 w-4" }) {
     </svg>
   );
 }
+
+export function UsersIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+      <path d="M16 19c0-2.2-1.8-4-4-4H7c-2.2 0-4 1.8-4 4" strokeLinecap="round" />
+      <circle cx="9.5" cy="8" r="3.5" />
+      <path d="M21 19c0-1.9-1.3-3.5-3-3.9M16.5 4.4a3.5 3.5 0 0 1 0 6.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ClipboardIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+      <path d="M9 5h6M9 5a3 3 0 0 1 6 0M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 13h6M9 17h4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function BedIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+      <path d="M4 10V5M20 13v6M4 19v-6" strokeLinecap="round" />
+      <path d="M4 13h16v6H4z" strokeLinejoin="round" />
+      <path d="M4 10h5a3 3 0 0 1 3 3M12 13h8v-2a3 3 0 0 0-3-3h-5v5Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

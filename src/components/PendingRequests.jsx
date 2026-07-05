@@ -135,7 +135,7 @@ export function PendingRequests() {
         </p>
       ) : (
         <div className="space-y-3">
-          {pendingRequests.slice(0, 3).map((request) => (
+          {pendingRequests.map((request) => (
             <article key={request.id} className="rounded-xl border border-line bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
