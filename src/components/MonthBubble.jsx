@@ -1,7 +1,14 @@
 import { formatCurrency, formatDate, formatMonth } from "../lib/format";
 import { WhatsAppIcon } from "./icons";
 
-export function MonthBubble({ month, onAddPayment, onSendReminder, paymentValue, onPaymentChange }) {
+export function MonthBubble({
+  month,
+  onAddPayment,
+  onSendReminder,
+  paymentValue,
+  onPaymentChange,
+  isAddingPayment = false
+}) {
   const remaining = Math.max(month.rentDue - month.paid, 0);
   const isClosed = remaining === 0;
 
@@ -61,8 +68,13 @@ export function MonthBubble({ month, onAddPayment, onSendReminder, paymentValue,
               placeholder="Enter payment"
             />
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={onAddPayment} className="secondary-button h-9 flex-1 text-[13px]">
-                Add Payment
+              <button
+                type="button"
+                onClick={onAddPayment}
+                className="secondary-button h-9 flex-1 text-[13px]"
+                disabled={isAddingPayment}
+              >
+                {isAddingPayment ? "Adding..." : "Add Payment"}
               </button>
               <button
                 type="button"

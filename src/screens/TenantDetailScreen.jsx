@@ -13,6 +13,7 @@ export function TenantDetailScreen() {
   const { allTenants, addPayment } = useAppContext();
   const { showToast } = useToast();
   const [paymentValue, setPaymentValue] = useState("1000");
+  const [savingPaymentId, setSavingPaymentId] = useState("");
   const tenant = allTenants.find((item) => item.id === tenantId);
 
   if (!tenant) {
@@ -33,15 +34,23 @@ export function TenantDetailScreen() {
 
   const sortedMonths = [...tenant.months].sort((a, b) => a.monthKey.localeCompare(b.monthKey));
 
-  const handleAddPayment = (monthId, remaining) => {
+  const handleAddPayment = async (monthId, remaining) => {
     const amount = Math.min(Number(paymentValue || 0), remaining);
     if (!amount) {
       showToast("Enter payment amount first");
       return;
     }
 
-    addPayment(tenant.id, monthId, amount);
-    showToast("Payment added");
+    setSavingPaymentId(monthId);
+    try {
+      await addPayment(tenant.id, monthId, amount);
+      showToast("Payment added");
+    } catch (error) {
+      console.error("Add payment failed:", error);
+      showToast(error?.message || "Unable to add payment");
+    } finally {
+      setSavingPaymentId("");
+    }
   };
 
   const handleReminder = (month) => {
@@ -89,6 +98,7 @@ export function TenantDetailScreen() {
                 onSendReminder={() => handleReminder(month)}
                 paymentValue={paymentValue}
                 onPaymentChange={(event) => setPaymentValue(event.target.value)}
+                isAddingPayment={savingPaymentId === month.id}
               />
             );
           })}

@@ -1,19 +1,35 @@
 import { getSupabaseClient } from "../supabase";
 
+function getPaymentsForRentTerm(payments, rentTermId) {
+  return payments.filter(
+    (payment) => payment.status !== "VOID" && payment.rent_term_id === rentTermId
+  );
+}
+
 function buildMonth(tenant, rentTerm) {
   const entryDate = tenant.date_of_entry || new Date().toISOString().slice(0, 10);
-  const monthKey = entryDate.slice(0, 7);
+  const effectiveFrom = rentTerm?.effective_from || entryDate;
+  const monthKey = effectiveFrom.slice(0, 7);
   const monthlyRent = Number(rentTerm?.monthly_rent || 0);
   const additionalFees = Number(rentTerm?.additional_fees || 0);
   const dueDay = String(rentTerm?.due_day || 5).padStart(2, "0");
+  const payments = getPaymentsForRentTerm(tenant.tenant_payments || [], rentTerm?.id);
+  const paid = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+  const latestPaymentDate = payments
+    .map((payment) => payment.payment_date)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  const rentDue = monthlyRent + additionalFees;
 
   return {
     id: rentTerm?.id || `${monthKey}-${tenant.id}`,
     monthKey,
-    rentDue: monthlyRent + additionalFees,
-    paid: 0,
+    rentDue,
+    paid: Math.min(paid, rentDue),
     dueDate: `${monthKey}-${dueDay}`,
-    closedOn: null
+    closedOn: paid >= rentDue ? latestPaymentDate : null,
+    payments
   };
 }
 
@@ -77,6 +93,15 @@ export async function fetchTenants() {
           effective_from,
           effective_to,
           due_day
+        ),
+        tenant_payments (
+          id,
+          rent_term_id,
+          amount,
+          payment_date,
+          payment_method,
+          status,
+          notes
         )
       `
     )
@@ -107,6 +132,28 @@ export async function createTenantWithRoomAndRent(tenantInput) {
     tenant_monthly_rent: Number(tenantInput.monthlyRent || 0),
     tenant_additional_fees: Number(tenantInput.additionalFees || 0),
     tenant_purpose_of_stay: tenantInput.purposeOfStay || null
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function createTenantPayment({ tenantId, rentTermId, amount, paymentDate, method, notes }) {
+  const client = getSupabaseClient();
+  if (!client) {
+    return null;
+  }
+
+  const { data, error } = await client.rpc("add_tenant_payment", {
+    input_tenant_id: tenantId,
+    input_rent_term_id: rentTermId || null,
+    input_amount: Number(amount || 0),
+    input_payment_date: paymentDate || new Date().toISOString().slice(0, 10),
+    input_payment_method: method || "CASH",
+    input_notes: notes || null
   });
 
   if (error) {

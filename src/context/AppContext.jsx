@@ -14,6 +14,7 @@ import {
   updateTenantRequestStatus
 } from "../lib/supabase/tenantRequests";
 import {
+  createTenantPayment,
   createTenantWithRoomAndRent,
   fetchTenants
 } from "../lib/supabase/tenants";
@@ -240,11 +241,18 @@ export function AppProvider({ children }) {
   };
 
   const addTenant = async (tenantInput) => {
-    let tenantId = crypto.randomUUID();
-
     if (session && getSupabaseClient() && isUserVerified(session.user)) {
       try {
-        tenantId = await createTenantWithRoomAndRent(tenantInput);
+        const tenantId = await createTenantWithRoomAndRent(tenantInput);
+        const remoteTenants = await fetchTenants();
+        const savedTenant = remoteTenants.find((tenant) => tenant.id === tenantId);
+
+        setAppState((current) => ({
+          ...current,
+          tenants: remoteTenants
+        }));
+
+        return savedTenant || { id: tenantId, ...tenantInput };
       } catch (error) {
         console.error("Create tenant failed:", error);
         throw error;
@@ -252,7 +260,7 @@ export function AppProvider({ children }) {
     }
 
     const tenant = {
-      id: tenantId,
+      id: crypto.randomUUID(),
       ...tenantInput
     };
 
@@ -351,7 +359,27 @@ export function AppProvider({ children }) {
     return tenant;
   };
 
-  const addPayment = (tenantId, monthId, amount) => {
+  const addPayment = async (tenantId, monthId, amount) => {
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      try {
+        await createTenantPayment({
+          tenantId,
+          rentTermId: monthId,
+          amount,
+          paymentDate: new Date().toISOString().slice(0, 10)
+        });
+        const remoteTenants = await fetchTenants();
+        setAppState((current) => ({
+          ...current,
+          tenants: remoteTenants
+        }));
+        return;
+      } catch (error) {
+        console.error("Create payment failed:", error);
+        throw error;
+      }
+    }
+
     setAppState((current) => ({
       ...current,
       tenants: current.tenants.map((tenant) => {
