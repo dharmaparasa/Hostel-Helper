@@ -14,6 +14,10 @@ import {
   updateTenantRequestStatus
 } from "../lib/supabase/tenantRequests";
 import {
+  createTenantWithRoomAndRent,
+  fetchTenants
+} from "../lib/supabase/tenants";
+import {
   persistDemoSession,
   persistState,
   restoreDemoSession,
@@ -95,10 +99,11 @@ export function AppProvider({ children }) {
       }
 
       try {
-        const [remoteHostels, remoteOwner, remoteRequests] = await Promise.all([
+        const [remoteHostels, remoteOwner, remoteRequests, remoteTenants] = await Promise.all([
           fetchHostels(),
           fetchCurrentOwner(),
-          fetchTenantRequests()
+          fetchTenantRequests(),
+          fetchTenants()
         ]);
         if (mounted) {
           setOwnerProfile(remoteOwner);
@@ -112,6 +117,7 @@ export function AppProvider({ children }) {
             return {
               ...current,
               hostels: remoteHostels,
+              tenants: remoteTenants,
               selectedHostelId: nextSelected
             };
           });
@@ -233,9 +239,20 @@ export function AppProvider({ children }) {
     }));
   };
 
-  const addTenant = (tenantInput) => {
+  const addTenant = async (tenantInput) => {
+    let tenantId = crypto.randomUUID();
+
+    if (session && getSupabaseClient() && isUserVerified(session.user)) {
+      try {
+        tenantId = await createTenantWithRoomAndRent(tenantInput);
+      } catch (error) {
+        console.error("Create tenant failed:", error);
+        throw error;
+      }
+    }
+
     const tenant = {
-      id: crypto.randomUUID(),
+      id: tenantId,
       ...tenantInput
     };
 
@@ -330,7 +347,7 @@ export function AppProvider({ children }) {
       );
     }
 
-    const tenant = addTenant(tenantInput);
+    const tenant = await addTenant(tenantInput);
     return tenant;
   };
 

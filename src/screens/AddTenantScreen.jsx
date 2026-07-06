@@ -16,6 +16,7 @@ export function AddTenantScreen() {
   const navigate = useNavigate();
   const { hostels, selectedHostelId, addTenant, selectHostel } = useAppContext();
   const { showToast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -44,7 +45,7 @@ export function AddTenantScreen() {
       [field]: event.target.value
     }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim() || !isTenantNameValid) {
       showToast("Please enter a valid tenant name (alphanumeric, no special characters)");
       return;
@@ -57,31 +58,39 @@ export function AddTenantScreen() {
     const monthKey = form.entryDate.slice(0, 7);
     const totalRent = Number(form.monthlyRent) + Number(form.additionalFees || 0);
 
-    const tenant = addTenant({
-      name: form.name.trim(),
-      age: form.age.trim(),
-      mobile: form.mobile.trim(),
-      hostelId: form.hostelId,
-      roomNumber: form.roomNumber.trim(),
-      entryDate: form.entryDate,
-      monthlyRent: Number(form.monthlyRent),
-      additionalFees: Number(form.additionalFees || 0),
-      purposeOfStay: form.purposeOfStay.trim(),
-      months: [
-        {
-          id: `${monthKey}-${form.name.toLowerCase().replaceAll(" ", "-")}`,
-          monthKey,
-          rentDue: totalRent,
-          paid: 0,
-          dueDate: `${monthKey}-05`,
-          closedOn: null
-        }
-      ]
-    });
+    setSubmitting(true);
+    try {
+      const tenant = await addTenant({
+        name: form.name.trim(),
+        age: form.age.trim(),
+        mobile: form.mobile.trim(),
+        hostelId: form.hostelId,
+        roomNumber: form.roomNumber.trim(),
+        entryDate: form.entryDate,
+        monthlyRent: Number(form.monthlyRent),
+        additionalFees: Number(form.additionalFees || 0),
+        purposeOfStay: form.purposeOfStay.trim(),
+        months: [
+          {
+            id: `${monthKey}-${form.name.toLowerCase().replaceAll(" ", "-")}`,
+            monthKey,
+            rentDue: totalRent,
+            paid: 0,
+            dueDate: `${monthKey}-05`,
+            closedOn: null
+          }
+        ]
+      });
 
-    selectHostel(form.hostelId);
-    showToast("Tenant saved");
-    navigate(`/tenants/${tenant.id}`, { replace: true });
+      selectHostel(form.hostelId);
+      showToast("Tenant saved");
+      navigate(`/tenants/${tenant.id}`, { replace: true });
+    } catch (error) {
+      console.error("Save tenant failed:", error);
+      showToast(error?.message || "Unable to save tenant");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -161,8 +170,8 @@ export function AddTenantScreen() {
       </div>
 
       <BottomBar>
-        <button type="button" onClick={handleSave} className="primary-button w-full">
-          Save Tenant
+        <button type="button" onClick={handleSave} className="primary-button w-full" disabled={submitting}>
+          {submitting ? "Saving..." : "Save Tenant"}
         </button>
       </BottomBar>
     </>
