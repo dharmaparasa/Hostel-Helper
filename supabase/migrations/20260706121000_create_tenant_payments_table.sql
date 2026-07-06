@@ -132,4 +132,3 @@ grant execute on function public.add_tenant_payment(
   text,
   text
 ) to authenticated;
-
