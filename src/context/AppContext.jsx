@@ -394,11 +394,21 @@ export function AppProvider({ children }) {
               return month;
             }
 
+            const paymentDate = new Date().toISOString().slice(0, 10);
             const nextPaid = Math.min(month.paid + amount, month.rentDue);
             return {
               ...month,
               paid: nextPaid,
-              closedOn: nextPaid >= month.rentDue ? new Date().toISOString() : null
+              closedOn: nextPaid >= month.rentDue ? paymentDate : null,
+              payments: [
+                ...(month.payments || []),
+                {
+                  id: crypto.randomUUID(),
+                  amount,
+                  payment_date: paymentDate,
+                  status: "PAID"
+                }
+              ]
             };
           })
         };
