@@ -53,7 +53,7 @@ export function LogoutButton({ className = "", showOwnerOnboardingQr = false }) 
               onClick={handleOwnerOnboardingQr}
               className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-[#F7FBFA]"
             >
-              Owner Onboarding QR
+              Onboarding QR
             </button>
           ) : null}
           <button
