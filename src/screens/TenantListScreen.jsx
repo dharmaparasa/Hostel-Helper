@@ -126,7 +126,7 @@ export function TenantListScreen() {
           <span className="top-app-bar-title">HostelPay</span>
         </div>
         <div className="flex items-center gap-2">
-          <LogoutButton />
+          <LogoutButton showOwnerOnboardingQr={activeTab === "onboardings"} />
         </div>
       </div>
 
