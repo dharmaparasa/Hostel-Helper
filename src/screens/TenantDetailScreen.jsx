@@ -17,12 +17,82 @@ const PAYMENT_COLORS = [
   "#8b5a2b"
 ];
 
-function getMonthDateRange(monthKey) {
-  const [year, month] = monthKey.split("-").map(Number);
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0);
+function parseDateValue(value) {
+  if (!value) {
+    return null;
+  }
 
-  return `${formatDate(start)} - ${formatDate(end)}`;
+  const [year, month, day] = String(value).split("-").map(Number);
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function formatInputDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addMonthsPreserveDay(date, amount) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + amount;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const day = Math.min(date.getDate(), lastDay);
+  return new Date(year, month, day);
+}
+
+function getMonthDateRange(month) {
+  const start = parseDateValue(month.startDate);
+  const end = parseDateValue(month.endDate);
+
+  if (start && end) {
+    return `${formatDate(start)} - ${formatDate(end)}`;
+  }
+
+  const [year, monthValue] = month.monthKey.split("-").map(Number);
+  const fallbackStart = new Date(year, monthValue - 1, 1);
+  const fallbackEnd = new Date(year, monthValue, 0);
+
+  return `${formatDate(fallbackStart)} - ${formatDate(fallbackEnd)}`;
+}
+
+function buildBillingMonths(tenant) {
+  const startDate = parseDateValue(tenant.rentEffectiveFrom || tenant.entryDate) || new Date();
+  const today = new Date();
+  const monthlyRent = Number(tenant.monthlyRent || 0);
+  const additionalFees = Number(tenant.additionalFees || 0);
+  const rentDue = monthlyRent + additionalFees;
+  const existingMonths = new Map((tenant.months || []).map((month) => [month.monthKey, month]));
+  const months = [];
+  let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
+  while (current <= today) {
+    const monthKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}`;
+    const existingMonth = existingMonths.get(monthKey);
+    const startValue = formatInputDate(current);
+    const endValue = formatInputDate(addMonthsPreserveDay(current, 1));
+
+    months.push({
+      id: existingMonth?.id || `${tenant.id}-${monthKey}`,
+      rentTermId: tenant.rentId || existingMonth?.id || null,
+      monthKey,
+      rentDue,
+      paid: Math.min(Number(existingMonth?.paid || 0), rentDue),
+      dueDate: `${monthKey}-${String(startDate.getDate()).padStart(2, "0")}`,
+      closedOn: existingMonth?.closedOn || null,
+      payments: existingMonth?.payments || [],
+      startDate: startValue,
+      endDate: endValue
+    });
+
+    current = addMonthsPreserveDay(current, 1);
+  }
+
+  return months;
 }
 
 function normalizePayment(payment, month, index) {
@@ -147,7 +217,7 @@ export function TenantDetailScreen() {
     );
   }
 
-  const sortedMonths = [...tenant.months].sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+  const sortedMonths = [...buildBillingMonths(tenant)].sort((a, b) => a.startDate.localeCompare(b.startDate));
   const billingCycles = buildBillingFlow(sortedMonths);
   const totalDue = billingCycles.reduce((sum, cycle) => sum + cycle.remaining, 0);
   const uniquePayments = billingCycles
@@ -157,16 +227,16 @@ export function TenantDetailScreen() {
         payment && list.findIndex((item) => item?.id === payment.id) === index
     );
 
-  const handleAddPayment = async (monthId) => {
+  const handleAddPayment = async (month) => {
     const amount = Number(paymentValue || 0);
     if (!amount) {
       showToast("Enter payment amount first");
       return;
     }
 
-    setSavingPaymentId(monthId);
+    setSavingPaymentId(month.id);
     try {
-      await addPayment(tenant.id, monthId, amount);
+      await addPayment(tenant.id, month.rentTermId || month.id, amount);
       showToast("Payment added");
     } catch (error) {
       console.error("Add payment failed:", error);
@@ -262,7 +332,7 @@ export function TenantDetailScreen() {
                           {formatMonth(month.monthKey)}
                         </p>
                         <p className="mt-1 text-[15px] font-medium text-muted">
-                          {getMonthDateRange(month.monthKey)}
+                          {getMonthDateRange(month)}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
@@ -339,7 +409,7 @@ export function TenantDetailScreen() {
                         />
                         <button
                           type="button"
-                          onClick={() => handleAddPayment(month.id)}
+                          onClick={() => handleAddPayment(month)}
                           className="secondary-button h-11 px-4 text-[14px]"
                           disabled={savingPaymentId === month.id}
                         >

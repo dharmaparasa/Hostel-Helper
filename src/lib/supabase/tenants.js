@@ -50,6 +50,8 @@ function mapTenant(row) {
     roomId: activeRoomAssignment?.room_id || activeRoomAssignment?.rooms?.id || "",
     rentId: activeRentTerm?.id || "",
     entryDate: row.date_of_entry,
+    rentEffectiveFrom: activeRentTerm?.effective_from || row.date_of_entry,
+    rentDueDay: Number(activeRentTerm?.due_day || 5),
     monthlyRent: Number(activeRentTerm?.monthly_rent || 0),
     additionalFees: Number(activeRentTerm?.additional_fees || 0),
     purposeOfStay: row.purpose_of_stay || "",
