@@ -8,7 +8,11 @@ import { SignupScreen } from "./screens/SignupScreen";
 import { CheckEmailScreen } from "./screens/CheckEmailScreen";
 
 import { HostelSelectionScreen } from "./screens/HostelSelectionScreen";
+import { MainAppScreen } from "./screens/MainAppScreen";
+import { DashboardScreen } from "./screens/DashboardScreen";
 import { TenantListScreen } from "./screens/TenantListScreen";
+import { RoomListScreen } from "./screens/RoomListScreen";
+import { PaymentsScreen } from "./screens/PaymentsScreen";
 import { AddTenantScreen } from "./screens/AddTenantScreen";
 import { TenantDetailScreen } from "./screens/TenantDetailScreen";
 import { OwnerOnboardingQrScreen } from "./screens/OwnerOnboardingQrScreen";
@@ -18,7 +22,7 @@ function AppRoutes() {
   const { isReady, session, hostels } = useAppContext();
 
   const hasHostels = hostels.length > 0;
-  const homePath = hasHostels ? "/tenants" : "/hostels";
+  const homePath = hasHostels ? "/rooms" : "/hostels";
 
   if (!isReady) {
     return (
@@ -63,7 +67,7 @@ function AppRoutes() {
         {/* Hostel Setup */}
         <Route path="/hostels" element={<HostelSelectionScreen />} />
 
-        {/* Tenant Routes */}
+        {/* Owner onboarding */}
         <Route
           path="/owner/onboarding-qr"
           element={
@@ -75,17 +79,23 @@ function AppRoutes() {
           }
         />
 
+        {/* Main app sections */}
         <Route
-          path="/tenants"
           element={
             hasHostels ? (
-              <TenantListScreen />
+              <MainAppScreen />
             ) : (
               <Navigate to="/hostels" replace />
             )
           }
-        />
+        >
+          <Route path="/dashboard" element={<DashboardScreen />} />
+          <Route path="/tenants" element={<TenantListScreen />} />
+          <Route path="/rooms" element={<RoomListScreen />} />
+          <Route path="/payments" element={<PaymentsScreen />} />
+        </Route>
 
+        {/* Tenant routes */}
         <Route
           path="/tenants/new"
           element={
