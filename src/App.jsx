@@ -16,13 +16,14 @@ import { PaymentsScreen } from "./screens/PaymentsScreen";
 import { AddTenantScreen } from "./screens/AddTenantScreen";
 import { TenantDetailScreen } from "./screens/TenantDetailScreen";
 import { OwnerOnboardingQrScreen } from "./screens/OwnerOnboardingQrScreen";
+import { OnboardingsScreen } from "./screens/OnboardingsScreen";
 import { PublicJoinScreen } from "./screens/PublicJoinScreen";
 
 function AppRoutes() {
   const { isReady, session, hostels } = useAppContext();
 
   const hasHostels = hostels.length > 0;
-  const homePath = hasHostels ? "/rooms" : "/hostels";
+  const homePath = hasHostels ? "/tenants" : "/hostels";
 
   if (!isReady) {
     return (
@@ -91,6 +92,7 @@ function AppRoutes() {
         >
           <Route path="/dashboard" element={<DashboardScreen />} />
           <Route path="/tenants" element={<TenantListScreen />} />
+          <Route path="/onboardings" element={<OnboardingsScreen />} />
           <Route path="/rooms" element={<RoomListScreen />} />
           <Route path="/payments" element={<PaymentsScreen />} />
         </Route>

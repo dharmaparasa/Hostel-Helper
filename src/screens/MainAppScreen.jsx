@@ -8,6 +8,7 @@ import { useAppContext } from "../context/AppContext";
 const TAB_BY_PATH = {
   "/dashboard": "dashboard",
   "/tenants": "tenants",
+  "/onboardings": "onboardings",
   "/rooms": "rooms",
   "/payments": "payments"
 };
@@ -15,6 +16,7 @@ const TAB_BY_PATH = {
 const TITLE_BY_TAB = {
   dashboard: "Dashboard",
   tenants: "Tenants",
+  onboardings: "Onboardings",
   rooms: "Rooms",
   payments: "Payments"
 };
@@ -23,7 +25,7 @@ export function MainAppScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { tenantRequests } = useAppContext();
-  const activeTab = TAB_BY_PATH[location.pathname] || "rooms";
+  const activeTab = TAB_BY_PATH[location.pathname] || "tenants";
   const pendingRequestCount = tenantRequests.filter((request) => request.status === "PENDING").length;
 
   return (

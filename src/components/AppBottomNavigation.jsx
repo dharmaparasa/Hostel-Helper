@@ -1,15 +1,12 @@
 import {
   BedIcon,
-  UsersIcon
+  UsersIcon,
+  ClipboardIcon,
+  BuildingIcon,
+  ShieldIcon
 } from "./icons";
 
-function DashboardIcon({ className = "h-5 w-5" }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-      <path d="M4 4h7v7H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 13h7v7H4z" strokeLinejoin="round" />
-    </svg>
-  );
-}
+
 
 function PaymentsIcon({ className = "h-5 w-5" }) {
   return (
@@ -50,20 +47,20 @@ export function AppBottomNavigation({ activeTab, pendingRequestCount, onNavigate
     >
       <div className="mx-auto flex max-w-md gap-1.5">
         <BottomNavItem
-          icon={DashboardIcon}
-          label="Dashboard"
-          active={activeTab === "dashboard"}
-          badgeCount={pendingRequestCount}
-          onClick={() => onNavigate("/dashboard")}
-        />
-        <BottomNavItem
           icon={UsersIcon}
           label="Tenants"
           active={activeTab === "tenants"}
           onClick={() => onNavigate("/tenants")}
         />
         <BottomNavItem
-          icon={BedIcon}
+          icon={ClipboardIcon}
+          label="Onboardings"
+          active={activeTab === "onboardings"}
+          badgeCount={pendingRequestCount}
+          onClick={() => onNavigate("/onboardings")}
+        />
+        <BottomNavItem
+          icon={BuildingIcon}
           label="Rooms"
           active={activeTab === "rooms"}
           onClick={() => onNavigate("/rooms")}
