@@ -25,7 +25,11 @@ export function formatMonth(monthKey) {
 }
 
 export function getDueMeta(month) {
-  const remaining = Math.max(month.rentDue - month.paid, 0);
+  if (!month) {
+    return { label: "No data", tone: "paid" };
+  }
+
+  const remaining = Math.max((month.rentDue || 0) - (month.paid || 0), 0);
 
   if (remaining === 0) {
     return {
@@ -34,7 +38,7 @@ export function getDueMeta(month) {
     };
   }
 
-  const dueDate = new Date(month.dueDate);
+  const dueDate = new Date(month.dueDate || `${month.monthKey}-05`);
   const today = new Date();
   const monthGap =
     (today.getFullYear() - dueDate.getFullYear()) * 12 +

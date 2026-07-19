@@ -1,9 +1,21 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
-import { TenantCard } from "../components/TenantCard";
+import { TenantCard, getTenantPaidDayCoverage } from "../components/TenantCard";
 import { PlusIcon, SearchIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
+
+function sortByPaidDaysLeft(firstTenant, secondTenant) {
+  const firstCoverage = getTenantPaidDayCoverage(firstTenant);
+  const secondCoverage = getTenantPaidDayCoverage(secondTenant);
+  const daysOrder = firstCoverage.daysLeft - secondCoverage.daysLeft;
+
+  if (daysOrder !== 0) {
+    return daysOrder;
+  }
+
+  return firstTenant.name.localeCompare(secondTenant.name);
+}
 
 export function TenantListScreen() {
   const navigate = useNavigate();
@@ -12,15 +24,15 @@ export function TenantListScreen() {
 
   const filteredTenants = useMemo(() => {
     const lowerQuery = query.trim().toLowerCase();
-    if (!lowerQuery) {
-      return tenants;
-    }
+    const visibleTenants = lowerQuery
+      ? tenants.filter(
+          (tenant) =>
+            tenant.name.toLowerCase().includes(lowerQuery) ||
+            String(tenant.roomNumber || "").toLowerCase().includes(lowerQuery)
+        )
+      : tenants;
 
-    return tenants.filter(
-      (tenant) =>
-        tenant.name.toLowerCase().includes(lowerQuery) ||
-        tenant.roomNumber.toLowerCase().includes(lowerQuery)
-    );
+    return [...visibleTenants].sort(sortByPaidDaysLeft);
   }, [tenants, query]);
 
   return (
