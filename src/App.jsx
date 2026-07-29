@@ -39,13 +39,14 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
+
+      {/* Login Route*/}
       <Route
         path="/login"
-        element={
-          session ? <Navigate to={homePath} replace /> : <LoginScreen />
-        }
+        element={session ? <Navigate to={homePath} replace /> : <LoginScreen />}
       />
 
+      {/* Signup Route */}
       <Route
         path="/signup"
         element={
@@ -56,11 +57,9 @@ function AppRoutes() {
       <Route path="/check-email" element={<CheckEmailScreen />} />
       <Route path="/join/:token" element={<PublicJoinScreen />} />
 
-      {/* Protected Routes */}
+      {/* ================ Protected Routes ================ */}
       <Route
-        element={
-          session ? <AppLayout /> : <Navigate to="/login" replace />
-        }
+        element={session ? <AppLayout /> : <Navigate to="/login" replace />}
       >
         {/* Root Redirect */}
         <Route path="/" element={<Navigate to={homePath} replace />} />
@@ -83,11 +82,7 @@ function AppRoutes() {
         {/* Main app sections */}
         <Route
           element={
-            hasHostels ? (
-              <MainAppScreen />
-            ) : (
-              <Navigate to="/hostels" replace />
-            )
+            hasHostels ? <MainAppScreen /> : <Navigate to="/hostels" replace />
           }
         >
           <Route path="/dashboard" element={<DashboardScreen />} />
