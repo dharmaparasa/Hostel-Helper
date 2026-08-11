@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LogoutButton } from "../components/LogoutButton";
 import { BackIcon, WhatsAppIcon } from "../components/icons";
@@ -201,6 +201,7 @@ export function TenantDetailScreen() {
   const { showToast } = useToast();
   const [paymentValue, setPaymentValue] = useState("1000");
   const [savingPaymentId, setSavingPaymentId] = useState("");
+  const scrollAreaRef = useRef(null);
   const tenant = allTenants.find((item) => item.id === tenantId);
 
   if (!tenant) {
@@ -220,6 +221,17 @@ export function TenantDetailScreen() {
 
   const paymentTargetCycle = billingCycles.find((cycle) => cycle.remaining > 0) ?? billingCycles.at(-1) ?? null;
   const paymentTargetMonth = paymentTargetCycle?.month ?? null;
+
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    });
+  }, [tenantId, billingCycles.length]);
 
   const handleAddPayment = async (month) => {
     const amount = Number(paymentValue || 0);
@@ -281,7 +293,7 @@ export function TenantDetailScreen() {
         </div>
       </div>
 
-      <div className="screen-pad flex-1 overflow-y-auto pb-4 pt-4">
+      <div ref={scrollAreaRef} className="screen-pad flex-1 overflow-y-auto pb-4 pt-4">
         <div className="relative">
           {billingCycles.map((cycle) => {
             const { month, paid, remaining, allocations } = cycle;
