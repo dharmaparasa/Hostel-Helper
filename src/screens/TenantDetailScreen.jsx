@@ -257,7 +257,7 @@ export function TenantDetailScreen() {
   };
 
   return (
-    <div className="animate-[slide-in_220ms_ease-out] min-h-[100dvh] bg-brand-soft">
+    <div className="animate-[slide-in_220ms_ease-out] flex h-[100dvh] flex-col overflow-hidden bg-brand-soft">
       <style>{`@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }`}</style>
       <div className="top-app-bar flex-none">
         <div className="flex items-center gap-3">
@@ -281,7 +281,7 @@ export function TenantDetailScreen() {
         </div>
       </div>
 
-      <div className="screen-pad pb-28 pt-4">
+      <div className="screen-pad flex-1 overflow-y-auto pb-4 pt-4">
         <div className="relative">
           {billingCycles.map((cycle) => {
             const { month, paid, remaining, allocations } = cycle;
@@ -394,33 +394,35 @@ export function TenantDetailScreen() {
       </div>
 
       {paymentTargetMonth && totalDue > 0 ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md rounded-[28px] border-t border-white/80 bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_34px_rgba(18,46,42,0.16)] backdrop-blur">
-          <div className="pointer-events-auto flex items-center gap-2">
-            <div className="flex min-w-0 flex-1 items-center rounded-full px-4 ring-1 ring-[#dbe9e5] focus-within:ring-2 focus-within:ring-brand/25">
-              <span className="pr-2 text-sm font-bold text-brand">Rs</span>
+        <div className="flex-none bg-brand-soft px-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] pt-2">
+          <div className="flex items-center gap-2 rounded-[24px] border border-[#cfe1dc] bg-white p-2 shadow-[0_-4px_22px_rgba(18,46,42,0.10)]">
+            <button
+              type="button"
+              onClick={() => handleReminder(paymentTargetMonth)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eaf8ef] text-[#128c4a] ring-1 ring-[#25d366]/20 transition hover:bg-[#dcf3e5] focus:outline-none focus:ring-4 focus:ring-[#25d366]/15"
+              aria-label="Send WhatsApp reminder"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+            </button>
+
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#f5faf8] px-3 ring-1 ring-[#e1ece8] focus-within:bg-white focus-within:ring-2 focus-within:ring-brand/20">
+              <span className="text-sm font-bold text-brand">Rs</span>
               <input
-                className="h-11 min-w-0 flex-1 text-base font-semibold text-ink outline-none placeholder:text-muted"
+                className="h-10 min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-ink outline-none placeholder:text-muted"
                 value={paymentValue}
                 onChange={(event) => setPaymentValue(event.target.value)}
                 inputMode="numeric"
                 placeholder="Amount"
               />
             </div>
+
             <button
               type="button"
               onClick={() => handleAddPayment(paymentTargetMonth)}
-              className="h-11 rounded-full bg-brand px-5 text-[14px] font-bold text-white shadow-[0_6px_14px_rgba(12,90,81,0.22)] transition hover:bg-brand-deep focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-10 shrink-0 rounded-full bg-brand px-4 text-[14px] font-bold text-white transition hover:bg-brand-deep focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={savingPaymentId === paymentTargetMonth.id}
             >
               {savingPaymentId === paymentTargetMonth.id ? "Adding" : "Add"}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleReminder(paymentTargetMonth)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-[#25d366]/25 bg-[#e7f8ee] text-[#128c4a] shadow-[0_6px_14px_rgba(18,140,74,0.12)] transition hover:bg-[#d9f4e5] focus:outline-none focus:ring-4 focus:ring-[#25d366]/15"
-              aria-label="Send reminder"
-            >
-              <WhatsAppIcon className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -428,3 +430,4 @@ export function TenantDetailScreen() {
     </div>
   );
 }
+
