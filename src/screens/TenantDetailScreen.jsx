@@ -269,7 +269,7 @@ export function TenantDetailScreen() {
   };
 
   return (
-    <div className="animate-[slide-in_220ms_ease-out] flex h-[100dvh] flex-col overflow-hidden bg-brand-soft">
+    <div className="animate-[slide-in_220ms_ease-out] flex h-full min-h-0 flex-col overflow-hidden overscroll-none bg-brand-soft">
       <style>{`@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }`}</style>
       <div className="top-app-bar flex-none">
         <div className="flex items-center gap-3">
@@ -293,7 +293,7 @@ export function TenantDetailScreen() {
         </div>
       </div>
 
-      <div ref={scrollAreaRef} className="screen-pad flex-1 overflow-y-auto pb-4 pt-4">
+      <div ref={scrollAreaRef} className="screen-pad min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 pt-4">
         <div className="relative">
           {billingCycles.map((cycle) => {
             const { month, paid, remaining, allocations } = cycle;

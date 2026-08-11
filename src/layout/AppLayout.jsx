@@ -5,11 +5,11 @@ export function AppLayout() {
   const isTenantDetail = /^\/tenants\/[^/]+$/.test(location.pathname);
 
   return (
-    <div className={isTenantDetail ? "app-shell h-[100dvh] overflow-hidden" : "app-shell"}>
+    <div className={isTenantDetail ? "fixed inset-0 overflow-hidden overscroll-none bg-white" : "app-shell"}>
       <div
         className={
           isTenantDetail
-            ? "mx-auto h-[100dvh] w-full max-w-md overflow-hidden bg-[#E3F6F4] px-0 pb-0 pt-0"
+            ? "mx-auto h-full w-full max-w-md overflow-hidden overscroll-none bg-[#E3F6F4] px-0 pb-0 pt-0"
             : "phone-frame"
         }
       >
@@ -18,3 +18,4 @@ export function AppLayout() {
     </div>
   );
 }
+
