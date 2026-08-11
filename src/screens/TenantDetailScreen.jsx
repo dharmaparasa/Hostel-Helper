@@ -220,16 +220,13 @@ export function TenantDetailScreen() {
   const sortedMonths = [...buildBillingMonths(tenant)].sort((a, b) => a.startDate.localeCompare(b.startDate));
   const billingCycles = buildBillingFlow(sortedMonths);
   const totalDue = billingCycles.reduce((sum, cycle) => sum + cycle.remaining, 0);
-  const uniquePayments = billingCycles
-    .flatMap((cycle) => cycle.allocations.map((allocation) => allocation.payment))
-    .filter(
-      (payment, index, list) =>
-        payment && list.findIndex((item) => item?.id === payment.id) === index
-    );
+
+  const paymentTargetCycle = billingCycles.find((cycle) => cycle.remaining > 0) ?? billingCycles.at(-1) ?? null;
+  const paymentTargetMonth = paymentTargetCycle?.month ?? null;
 
   const handleAddPayment = async (month) => {
     const amount = Number(paymentValue || 0);
-    if (!amount) {
+    if (!amount || !month) {
       showToast("Enter payment amount first");
       return;
     }
@@ -237,6 +234,7 @@ export function TenantDetailScreen() {
     setSavingPaymentId(month.id);
     try {
       await addPayment(tenant.id, month.rentTermId || month.id, amount);
+      setPaymentValue("1000");
       showToast("Payment added");
     } catch (error) {
       console.error("Add payment failed:", error);
@@ -247,18 +245,24 @@ export function TenantDetailScreen() {
   };
 
   const handleReminder = (month) => {
-    const cycle = billingCycles.find((item) => item.month.id === month.id);
-    const remaining = Math.max(cycle?.remaining ?? month.rentDue - month.paid, 0);
+    const cycle = month ? billingCycles.find((item) => item.month.id === month.id) : paymentTargetCycle;
+    const remaining = Math.max(cycle?.remaining ?? (month?.rentDue ?? 0), 0);
     const text = encodeURIComponent(
       `Hello ${tenant.name}, this is a friendly reminder for your room ${tenant.roomNumber}. Pending amount: ${formatCurrency(remaining)}. Please send when possible.`
     );
+
+    if (!tenant.mobile) {
+      showToast("No mobile number recorded for this tenant");
+      return;
+    }
+
     window.open(`https://wa.me/${tenant.mobile.replace(/\D/g, "")}?text=${text}`, "_blank");
   };
 
   return (
-    <div className="animate-[slide-in_220ms_ease-out] -mb-24 pb-0">
+    <div className="animate-[slide-in_220ms_ease-out] flex h-[100dvh] flex-col overflow-hidden bg-brand-soft">
       <style>{`@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }`}</style>
-      <div className="top-app-bar">
+      <div className="top-app-bar flex-none">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -280,32 +284,16 @@ export function TenantDetailScreen() {
         </div>
       </div>
 
-      <div className="screen-pad min-h-[calc(100svh-84px)] bg-[#f7f8f6] pb-6 pt-4">
-        <div className="mb-4 rounded-2xl bg-white px-4 py-3 shadow-[0_3px_14px_rgba(36,44,40,0.06)]">
-          <p className="text-[13px] font-semibold text-muted">Payment flow</p>
-          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
-            {uniquePayments.length > 0 ? (
-              uniquePayments.map((payment) => (
-                <div key={payment.id} className="flex items-center gap-2 text-sm text-ink">
-                  <span
-                    className="h-3.5 w-3.5 shrink-0 rounded-full shadow-sm"
-                    style={{ backgroundColor: payment.color }}
-                  />
-                  <span className="font-bold">{formatCurrency(payment.amount)}</span>
-                  <span className="text-muted">{formatDate(payment.paymentDate)}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm font-medium text-muted">No payment recorded yet</p>
-            )}
-          </div>
-        </div>
-
+      <div className="screen-pad flex-1 overflow-y-auto pb-28 pt-4">
         <div className="relative">
           {billingCycles.map((cycle) => {
-            const { month, paid, remaining, percentPaid, allocations } = cycle;
+            const { month, paid, remaining, allocations } = cycle;
             const isClosed = remaining === 0;
             const progressColor = allocations.at(-1)?.payment?.color || "#45a91a";
+            const paidSegments = allocations.map((allocation) => ({
+              ...allocation,
+              width: (allocation.amount / Math.max(month.rentDue, 1)) * 100
+            }));
 
             return (
               <div key={month.id} className="grid min-h-[33svh] grid-cols-[10%_90%]">
@@ -356,14 +344,17 @@ export function TenantDetailScreen() {
                       </div>
                     </div>
 
-                    <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#e9ece8]">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${percentPaid}%`,
-                          backgroundColor: progressColor
-                        }}
-                      />
+                    <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[#e9ece8]">
+                      {paidSegments.map((segment) => (
+                        <div
+                          key={`${month.id}-progress-${segment.paymentId}`}
+                          className="h-full min-w-[3px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                          style={{
+                            width: `${segment.width}%`,
+                            backgroundColor: segment.payment.color
+                          }}
+                        />
+                      ))}
                     </div>
 
                     <div className="mt-5 border-t border-[#e5e8e4] pt-4">
@@ -397,34 +388,6 @@ export function TenantDetailScreen() {
                         )}
                       </div>
                     </div>
-
-                    {!isClosed ? (
-                      <div className="mt-5 grid grid-cols-[1fr_auto_auto] gap-2">
-                        <input
-                          className="input-base h-11 bg-[#f8faf8] px-3 text-base"
-                          value={paymentValue}
-                          onChange={(event) => setPaymentValue(event.target.value)}
-                          inputMode="numeric"
-                          placeholder="Amount"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleAddPayment(month)}
-                          className="secondary-button h-11 px-4 text-[14px]"
-                          disabled={savingPaymentId === month.id}
-                        >
-                          {savingPaymentId === month.id ? "Adding" : "Add"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReminder(month)}
-                          className="secondary-button h-11 px-3"
-                          aria-label="Send reminder"
-                        >
-                          <WhatsAppIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    ) : null}
                   </section>
                 </div>
               </div>
@@ -432,6 +395,39 @@ export function TenantDetailScreen() {
           })}
         </div>
       </div>
+
+      {paymentTargetMonth && totalDue > 0 ? (
+        <div className="safe-bottom pointer-events-none bg-gradient-to-t from-brand-soft via-brand-soft/95 to-transparent px-3 pb-3 pt-6">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-[28px] border border-white/80 bg-white/95 p-2 shadow-[0_12px_36px_rgba(18,46,42,0.18)] backdrop-blur">
+            <div className="flex min-w-0 flex-1 items-center rounded-full bg-[#f0f7f5] px-4 ring-1 ring-[#dbe9e5] focus-within:ring-2 focus-within:ring-brand/25">
+              <span className="pr-2 text-sm font-bold text-brand">Rs</span>
+              <input
+                className="h-11 min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:text-muted"
+                value={paymentValue}
+                onChange={(event) => setPaymentValue(event.target.value)}
+                inputMode="numeric"
+                placeholder="Amount"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => handleAddPayment(paymentTargetMonth)}
+              className="h-11 rounded-full bg-brand px-5 text-[14px] font-bold text-white shadow-[0_6px_14px_rgba(12,90,81,0.22)] transition hover:bg-brand-deep focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={savingPaymentId === paymentTargetMonth.id}
+            >
+              {savingPaymentId === paymentTargetMonth.id ? "Adding" : "Add"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReminder(paymentTargetMonth)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_6px_14px_rgba(37,211,102,0.26)] transition hover:bg-[#1fbd5c] focus:outline-none focus:ring-4 focus:ring-[#25d366]/20"
+              aria-label="Send reminder"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
