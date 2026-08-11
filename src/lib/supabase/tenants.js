@@ -103,12 +103,14 @@ export async function fetchTenants() {
           payment_date,
           payment_method,
           status,
-          notes
+          notes,
+          created_at
         )
       `
     )
     .eq("status", "ACTIVE")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("created_at", { referencedTable: "tenant_payments", ascending: true });
 
   if (error) {
     throw error;

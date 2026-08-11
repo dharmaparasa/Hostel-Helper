@@ -114,10 +114,7 @@ function getTenantPayments(sortedMonths) {
   );
 
   if (realPayments.length > 0) {
-    return realPayments.sort((a, b) => {
-      const dateOrder = String(a.paymentDate || "").localeCompare(String(b.paymentDate || ""));
-      return dateOrder || a.id.localeCompare(b.id);
-    });
+    return realPayments;
   }
 
   return sortedMonths
@@ -260,7 +257,7 @@ export function TenantDetailScreen() {
   };
 
   return (
-    <div className="animate-[slide-in_220ms_ease-out] flex h-[100dvh] flex-col overflow-hidden bg-brand-soft">
+    <div className="animate-[slide-in_220ms_ease-out] min-h-[100dvh] bg-brand-soft">
       <style>{`@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }`}</style>
       <div className="top-app-bar flex-none">
         <div className="flex items-center gap-3">
@@ -284,7 +281,7 @@ export function TenantDetailScreen() {
         </div>
       </div>
 
-      <div className="screen-pad flex-1 overflow-y-auto pb-28 pt-4">
+      <div className="screen-pad pb-28 pt-4">
         <div className="relative">
           {billingCycles.map((cycle) => {
             const { month, paid, remaining, allocations } = cycle;
@@ -397,12 +394,12 @@ export function TenantDetailScreen() {
       </div>
 
       {paymentTargetMonth && totalDue > 0 ? (
-        <div className="safe-bottom pointer-events-none bg-gradient-to-t from-brand-soft via-brand-soft/95 to-transparent px-3 pb-3 pt-6">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-[28px] border border-white/80 bg-white/95 p-2 shadow-[0_12px_36px_rgba(18,46,42,0.18)] backdrop-blur">
-            <div className="flex min-w-0 flex-1 items-center rounded-full bg-[#f0f7f5] px-4 ring-1 ring-[#dbe9e5] focus-within:ring-2 focus-within:ring-brand/25">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md rounded-[28px] border-t border-white/80 bg-white/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_34px_rgba(18,46,42,0.16)] backdrop-blur">
+          <div className="pointer-events-auto flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center rounded-full px-4 ring-1 ring-[#dbe9e5] focus-within:ring-2 focus-within:ring-brand/25">
               <span className="pr-2 text-sm font-bold text-brand">Rs</span>
               <input
-                className="h-11 min-w-0 flex-1 bg-transparent text-base font-semibold text-ink outline-none placeholder:text-muted"
+                className="h-11 min-w-0 flex-1 text-base font-semibold text-ink outline-none placeholder:text-muted"
                 value={paymentValue}
                 onChange={(event) => setPaymentValue(event.target.value)}
                 inputMode="numeric"
@@ -420,10 +417,10 @@ export function TenantDetailScreen() {
             <button
               type="button"
               onClick={() => handleReminder(paymentTargetMonth)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_6px_14px_rgba(37,211,102,0.26)] transition hover:bg-[#1fbd5c] focus:outline-none focus:ring-4 focus:ring-[#25d366]/20"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-[#25d366]/25 bg-[#e7f8ee] text-[#128c4a] shadow-[0_6px_14px_rgba(18,140,74,0.12)] transition hover:bg-[#d9f4e5] focus:outline-none focus:ring-4 focus:ring-[#25d366]/15"
               aria-label="Send reminder"
             >
-              <WhatsAppIcon className="h-5 w-5" />
+              <WhatsAppIcon className="h-6 w-6" />
             </button>
           </div>
         </div>
