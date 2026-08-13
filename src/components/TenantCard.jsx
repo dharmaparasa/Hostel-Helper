@@ -1,119 +1,61 @@
 import { formatCurrency, getDueMeta } from "../lib/format";
 
-const DAY_MS = 1000 * 60 * 60 * 24;
+function getMonthProgress(month) {
+  const rentDue = Number(month?.rentDue || 0);
+  const paid = Math.max(0, Number(month?.paid || 0));
+  const remaining = Math.max(rentDue - paid, 0);
+  const percent = rentDue > 0 ? Math.min(100, Math.round((paid / rentDue) * 100)) : 0;
 
-function parseLocalDate(value) {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(year, month - 1, day);
+  return {
+    month,
+    rentDue,
+    paid,
+    remaining,
+    percent
+  };
 }
 
-function addMonths(date, count) {
-  return new Date(date.getFullYear(), date.getMonth() + count, date.getDate());
-}
-
-function startOfDay(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function getCycleDate(monthKey, anchorDate) {
-  const [year, month] = String(monthKey).split("-").map(Number);
-  if (!year || !month || !anchorDate) {
-    return null;
-  }
-
-  const lastDay = new Date(year, month, 0).getDate();
-  const day = Math.min(anchorDate.getDate(), lastDay);
-  return new Date(year, month - 1, day);
-}
-
-function getCycleRange(month, tenant) {
-  const dueDay = Number(tenant.rentDueDay || 5);
-  const fallbackMonthKey = month?.monthKey || new Date().toISOString().slice(0, 7);
-  const fallbackDueDate = `${fallbackMonthKey}-${String(dueDay).padStart(2, "0")}`;
-  const anchorDate = parseLocalDate(tenant.rentEffectiveFrom) || parseLocalDate(tenant.entryDate);
-  const cycleStart =
-    parseLocalDate(month?.startDate) ||
-    getCycleDate(fallbackMonthKey, anchorDate) ||
-    parseLocalDate(month?.dueDate) ||
-    parseLocalDate(fallbackDueDate);
-  const cycleEnd = parseLocalDate(month?.endDate) || addMonths(cycleStart, 1);
-
-  return { cycleStart, cycleEnd };
-}
-
-function getActiveRentCycle(tenant) {
+function getDisplayMonth(tenant) {
   const months = tenant.months || [];
-  const today = startOfDay(new Date());
-
-  const cycles = months
-    .map((month) => ({
-      month,
-      ...getCycleRange(month, tenant)
-    }))
-    .filter((cycle) => cycle.cycleStart && cycle.cycleEnd)
-    .sort((a, b) => a.cycleStart - b.cycleStart);
-
   return (
-    cycles.find((cycle) => today >= cycle.cycleStart && today < cycle.cycleEnd) ||
-    cycles.find((cycle) => cycle.month.paid < cycle.month.rentDue) ||
-    cycles.at(-1) ||
+    months.find((month) => Number(month.paid || 0) < Number(month.rentDue || 0)) ||
+    months.at(-1) ||
+    months[0] ||
     null
   );
 }
 
 export function getTenantPaidDayCoverage(tenant) {
-  const activeCycle = getActiveRentCycle(tenant);
-  const monthlyRent = Number(tenant.monthlyRent || activeCycle?.month?.rentDue || 0);
-  const paid = Number(activeCycle?.month?.paid || 0);
-
-  if (!activeCycle || monthlyRent <= 0) {
-    return {
-      activeCycle,
-      cycleDays: 0,
-      daysLeft: 0,
-      percent: 0,
-      label: "No paid days left"
-    };
-  }
-
-  const today = startOfDay(new Date());
-  const { cycleStart, cycleEnd } = activeCycle;
-  const cycleDays = Math.max(1, Math.ceil((cycleEnd - cycleStart) / DAY_MS));
-  const elapsedDays = Math.min(cycleDays, Math.max(0, Math.floor((today - cycleStart) / DAY_MS)));
-  const perDayRate = monthlyRent / cycleDays;
-  const paidDays = Math.min(cycleDays, Math.floor(paid / perDayRate));
-  const daysLeft = Math.max(paidDays - elapsedDays, 0);
-  const percent = Math.min(100, Math.max(0, Math.round((daysLeft / cycleDays) * 100)));
-  const label = daysLeft === 1 ? "1 paid day left" : `${daysLeft} paid days left`;
+  const activeMonth = getDisplayMonth(tenant);
+  const progress = getMonthProgress(activeMonth);
+  const label =
+    progress.rentDue > 0
+      ? `${formatCurrency(progress.paid)} paid of ${formatCurrency(progress.rentDue)}`
+      : "No rent set";
 
   return {
-    activeCycle,
-    cycleDays,
-    daysLeft,
-    percent,
+    activeCycle: activeMonth ? { month: activeMonth } : null,
+    cycleDays: 0,
+    daysLeft: progress.percent,
+    percent: progress.percent,
+    paid: progress.paid,
+    rentDue: progress.rentDue,
+    remaining: progress.remaining,
     label
   };
 }
 
 function getCoverageMeta(coverage) {
-  if (coverage.daysLeft <= 0) {
+  if (coverage.remaining > 0 && coverage.percent < 50) {
     return {
-      percent: coverage.percent,
+      percent: coverage.percent > 0 ? Math.max(coverage.percent, 8) : 0,
       color: "#ef4444",
       shadow: "rgba(239,68,68,0.16)",
       label: coverage.label
     };
   }
 
-  if (coverage.daysLeft <= 7) {
+  if (coverage.remaining > 0 && coverage.percent < 100) {
     return {
       percent: Math.max(coverage.percent, 8),
       color: "#f59e0b",
@@ -133,9 +75,13 @@ function getCoverageMeta(coverage) {
 export function TenantCard({ tenant, onClick }) {
   const months = tenant.months || [];
   const coverage = getTenantPaidDayCoverage(tenant);
-  const openMonth = coverage.activeCycle?.month || months.find((month) => month.paid < month.rentDue) || months[0];
+  const openMonth =
+    coverage.activeCycle?.month ||
+    months.find((month) => Number(month.paid || 0) < Number(month.rentDue || 0)) ||
+    months.at(-1) ||
+    months[0];
   const dueAmount = months.reduce(
-    (sum, month) => sum + Math.max(month.rentDue - month.paid, 0),
+    (sum, month) => sum + Math.max(Number(month.rentDue || 0) - Number(month.paid || 0), 0),
     0
   );
   const dueMeta = getDueMeta(openMonth);
