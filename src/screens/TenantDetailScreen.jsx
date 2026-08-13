@@ -5,6 +5,7 @@ import { BackIcon, WhatsAppIcon } from "../components/icons";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { formatCurrency, formatDate, formatMonth } from "../lib/format";
+import phoneIcon from '../assets/phone-icon.png';
 
 const PAYMENT_COLORS = [
   "#2563eb",
@@ -289,6 +290,9 @@ export function TenantDetailScreen() {
           <span className="rounded-full bg-rose-500 px-3 py-1.5 text-[13px] font-bold text-white">
             Due {formatCurrency(totalDue)}
           </span>
+          <button  onClick={() => window.location.href = `tel:${tenant.mobile}`}>
+            <img src={phoneIcon} alt="Call" className="h-5 w-5" />
+          </button>
           <LogoutButton />
         </div>
       </div>
